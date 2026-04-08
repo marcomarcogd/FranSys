@@ -1,0 +1,19 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:fransys;MODE=MySQL;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+
+app:
+  jwt:
+    issuer: fransys-test
+    secret: FranSysJwtSecretFranSysJwtSecret2026
+    access-token-minutes: 720
+  public-feedback:
+    expire-days: 30
