@@ -42,22 +42,30 @@ import { useAuthStore } from '../store/auth'
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
+const customerAliasPaths = new Set([
+  '/admin/leads',
+  '/admin/identification',
+  '/admin/assessment',
+  '/admin/match',
+  '/admin/delivery',
+  '/admin/aftersales',
+])
 
 const menuRoutes = computed(() => {
   const adminRoute = router.getRoutes().find((item) => item.path === '/admin')
-  return (adminRoute?.children || []).filter((item) => !item.meta?.hidden)
+  return (adminRoute?.children || []).filter((item) => {
+    if (item.meta?.hidden) {
+      return false
+    }
+    if (!item.meta?.title) {
+      return false
+    }
+    return !item.redirect
+  })
 })
 
 const activeMenuPath = computed(() => {
-  if (
-    route.path.startsWith('/admin/detail/')
-    || route.path.startsWith('/admin/leads')
-    || route.path.startsWith('/admin/identification')
-    || route.path.startsWith('/admin/assessment')
-    || route.path.startsWith('/admin/match')
-    || route.path.startsWith('/admin/delivery')
-    || route.path.startsWith('/admin/aftersales')
-  ) {
+  if (route.path.startsWith('/admin/detail/') || customerAliasPaths.has(route.path)) {
     return '/admin/customers'
   }
   return route.path

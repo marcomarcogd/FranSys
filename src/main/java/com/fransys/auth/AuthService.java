@@ -32,6 +32,9 @@ public class AuthService {
     }
 
     public AuthDtos.CurrentUserResponse me(SysUserDetails userDetails) {
+        if (userDetails == null) {
+            throw new BusinessException("登录已失效，请重新登录");
+        }
         return new AuthDtos.CurrentUserResponse(
                 userDetails.getUserId(),
                 userDetails.getUsername(),

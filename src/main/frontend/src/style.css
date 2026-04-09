@@ -33,7 +33,11 @@ a {
 }
 
 .admin-sidebar {
+  display: flex;
+  flex-direction: column;
   padding: 20px 16px;
+  min-height: 100vh;
+  overflow: hidden;
   background: linear-gradient(180deg, #163545 0%, #0f2430 100%);
   color: #fff;
 }
@@ -73,8 +77,10 @@ a {
 }
 
 .sidebar-menu {
+  flex: 1;
   border-right: 0 !important;
   background: transparent !important;
+  overflow-y: auto;
 }
 
 .sidebar-menu .el-menu-item {
