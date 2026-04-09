@@ -5,14 +5,18 @@
         <div class="toolbar-title">产品库</div>
         <el-button type="primary" @click="openDialog()">新增产品</el-button>
       </div>
+      <div class="public-summary">
+        <div>一个企业可维护多款产品，建议先补齐价格、适用人群、服务流程和监管说明。</div>
+        <div>产品图片支持上传，也可直接粘贴已有图片地址。</div>
+      </div>
       <el-form :inline="true" :model="filters">
         <el-form-item label="所属企业">
-          <el-select v-model="filters.enterpriseId" clearable style="width: 220px">
+          <el-select v-model="filters.enterpriseId" clearable style="width: 220px" placeholder="请选择所属企业">
             <el-option v-for="item in enterprises" :key="item.id" :label="item.name" :value="item.id" />
           </el-select>
         </el-form-item>
         <el-form-item label="分类">
-          <el-input v-model="filters.category" placeholder="输入分类筛选" clearable />
+          <el-input v-model="filters.category" placeholder="输入分类关键字筛选" clearable />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="load">查询</el-button>
@@ -21,7 +25,7 @@
       </el-form>
     </el-card>
 
-    <el-table :data="rows" border>
+    <el-table :data="rows" border empty-text="暂无产品数据，请先新增产品">
       <el-table-column label="配图" width="100">
         <template #default="{ row }">
           <el-image v-if="row.imageUrl" :src="row.imageUrl" fit="cover" class="product-thumb" />
@@ -48,30 +52,31 @@
     <el-dialog v-model="dialogVisible" :title="form.id ? '编辑产品' : '新增产品'" width="860px">
       <el-form :model="form" label-width="110px" class="grid-form">
         <el-form-item label="所属企业">
-          <el-select v-model="form.enterpriseId" style="width: 100%">
+          <el-select v-model="form.enterpriseId" style="width: 100%" placeholder="请选择所属企业">
             <el-option v-for="item in enterprises" :key="item.id" :label="item.name" :value="item.id" />
           </el-select>
         </el-form-item>
-        <el-form-item label="产品名称"><el-input v-model="form.name" /></el-form-item>
-        <el-form-item label="规格"><el-input v-model="form.specification" /></el-form-item>
-        <el-form-item label="分类"><el-input v-model="form.category" /></el-form-item>
-        <el-form-item label="适用人群"><el-input v-model="form.applicablePeople" /></el-form-item>
-        <el-form-item label="价格"><el-input v-model="form.price" /></el-form-item>
+        <el-form-item label="产品名称"><el-input v-model="form.name" placeholder="请输入产品名称" clearable /></el-form-item>
+        <el-form-item label="规格"><el-input v-model="form.specification" placeholder="请输入规格，例如 8小时/次" clearable /></el-form-item>
+        <el-form-item label="分类"><el-input v-model="form.category" placeholder="请输入产品分类" clearable /></el-form-item>
+        <el-form-item label="适用人群"><el-input v-model="form.applicablePeople" placeholder="请输入适用人群" clearable /></el-form-item>
+        <el-form-item label="价格"><el-input v-model="form.price" placeholder="请输入价格，例如 2999" clearable /></el-form-item>
         <el-form-item label="启用"><el-switch v-model="form.active" /></el-form-item>
       </el-form>
       <el-form :model="form" label-width="110px">
         <el-form-item label="配图">
           <div class="upload-block">
+            <div class="muted-text">支持上传图片文件；若已有固定地址，也可以直接填写图片 URL。</div>
             <el-upload :show-file-list="false" :http-request="uploadImage">
               <el-button>上传图片</el-button>
             </el-upload>
             <el-image v-if="form.imageUrl" :src="form.imageUrl" fit="cover" class="product-thumb large" />
-            <el-input v-model="form.imageUrl" placeholder="或直接填写图片地址" />
+            <el-input v-model="form.imageUrl" placeholder="请输入图片地址，例如 /uploads/products/xxx.png" clearable />
           </div>
         </el-form-item>
-        <el-form-item label="服务流程"><el-input v-model="form.serviceProcess" type="textarea" :rows="3" /></el-form-item>
-        <el-form-item label="监管说明"><el-input v-model="form.regulatoryInfo" type="textarea" :rows="3" /></el-form-item>
-        <el-form-item label="简介"><el-input v-model="form.description" type="textarea" :rows="3" /></el-form-item>
+        <el-form-item label="服务流程"><el-input v-model="form.serviceProcess" type="textarea" :rows="3" placeholder="请输入标准服务流程，例如 评估 -> 安排 -> 执行 -> 回访" /></el-form-item>
+        <el-form-item label="监管说明"><el-input v-model="form.regulatoryInfo" type="textarea" :rows="3" placeholder="请输入合规、监管或备案相关说明" /></el-form-item>
+        <el-form-item label="简介"><el-input v-model="form.description" type="textarea" :rows="3" placeholder="请输入产品卖点、适用场景或补充说明" /></el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
@@ -85,6 +90,7 @@
 import { onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { api } from '../../api/fransys'
+import { isBlank } from '../../constants/ui'
 
 const rows = ref<any[]>([])
 const enterprises = ref<any[]>([])
@@ -125,6 +131,18 @@ function resetFilters() {
 }
 
 async function save() {
+  if (!form.enterpriseId) {
+    ElMessage.warning('请先选择所属企业')
+    return
+  }
+  if (isBlank(form.name)) {
+    ElMessage.warning('请填写产品名称')
+    return
+  }
+  if (form.price !== '' && Number.isNaN(Number(form.price))) {
+    ElMessage.warning('请输入有效的产品价格')
+    return
+  }
   await api.saveProduct({
     ...form,
     price: form.price === '' ? null : form.price,
@@ -135,6 +153,14 @@ async function save() {
 }
 
 async function uploadImage(option: any) {
+  if (!option.file?.type?.startsWith('image/')) {
+    ElMessage.warning('请上传图片文件')
+    return
+  }
+  if (option.file.size > 5 * 1024 * 1024) {
+    ElMessage.warning('图片大小不能超过 5MB')
+    return
+  }
   const result = await api.uploadProductImage(option.file)
   form.imageUrl = result.url
   option.onSuccess?.(result)

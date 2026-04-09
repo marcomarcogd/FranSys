@@ -8,7 +8,7 @@
     <div class="two-column">
       <el-card shadow="never">
         <template #header>内部用户</template>
-        <el-table :data="meta.users || []" border>
+        <el-table :data="meta.users || []" border empty-text="暂无内部用户，请先新增账号">
           <el-table-column prop="username" label="用户名" width="120" />
           <el-table-column prop="displayName" label="姓名" width="120" />
           <el-table-column prop="roleCode" label="角色" />
@@ -25,7 +25,8 @@
 
       <el-card shadow="never">
         <template #header>角色说明</template>
-        <el-timeline>
+        <el-empty v-if="!(meta.roles || []).length" description="暂无角色说明" />
+        <el-timeline v-else>
           <el-timeline-item v-for="role in meta.roles || []" :key="role.id" :timestamp="role.roleCode">
             <div class="role-name">{{ role.roleName }}</div>
             <div class="muted-text">{{ role.description }}</div>
@@ -35,15 +36,19 @@
     </div>
 
     <el-dialog v-model="dialogVisible" title="用户信息" width="560px">
+      <div class="public-summary">
+        <div>新建用户时必须设置密码；编辑已有用户时密码留空表示不修改。</div>
+        <div>请按实际职责选择角色，避免越权账号过多。</div>
+      </div>
       <el-form :model="form" label-width="110px">
-        <el-form-item label="用户名"><el-input v-model="form.username" /></el-form-item>
-        <el-form-item label="姓名"><el-input v-model="form.displayName" /></el-form-item>
+        <el-form-item label="用户名"><el-input v-model="form.username" placeholder="请输入登录用户名" clearable /></el-form-item>
+        <el-form-item label="姓名"><el-input v-model="form.displayName" placeholder="请输入用户姓名" clearable /></el-form-item>
         <el-form-item label="角色">
-          <el-select v-model="form.roleCode" style="width: 100%">
+          <el-select v-model="form.roleCode" style="width: 100%" placeholder="请选择角色">
             <el-option v-for="role in meta.roles || []" :key="role.id" :label="role.roleName" :value="role.roleCode" />
           </el-select>
         </el-form-item>
-        <el-form-item label="密码"><el-input v-model="form.password" placeholder="编辑时留空表示不修改" /></el-form-item>
+        <el-form-item label="密码"><el-input v-model="form.password" placeholder="编辑时留空表示不修改" show-password /></el-form-item>
         <el-form-item label="启用"><el-switch v-model="form.enabled" /></el-form-item>
       </el-form>
       <template #footer>
@@ -58,6 +63,7 @@
 import { onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { api } from '../../api/fransys'
+import { isBlank } from '../../constants/ui'
 
 const meta = reactive<any>({})
 const dialogVisible = ref(false)
@@ -78,6 +84,22 @@ async function load() {
 }
 
 async function save() {
+  if (isBlank(form.username)) {
+    ElMessage.warning('请填写用户名')
+    return
+  }
+  if (isBlank(form.displayName)) {
+    ElMessage.warning('请填写姓名')
+    return
+  }
+  if (isBlank(form.roleCode)) {
+    ElMessage.warning('请选择角色')
+    return
+  }
+  if (!form.id && isBlank(form.password)) {
+    ElMessage.warning('新建用户时必须设置密码')
+    return
+  }
   await api.saveUser(form)
   ElMessage.success('用户已保存')
   dialogVisible.value = false

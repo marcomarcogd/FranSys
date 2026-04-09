@@ -48,6 +48,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleException(Exception ex) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.fail("系统异常: " + ex.getMessage()));
+                .body(ApiResponse.fail("系统开小差了，请稍后重试"));
     }
 }

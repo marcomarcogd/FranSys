@@ -333,9 +333,9 @@ public class CustomerService {
 
     private String followFrequencyHint(String level) {
         return switch (defaultIfBlank(level, "").toUpperCase(Locale.ROOT)) {
-            case "A" -> "A级客户建议每 3 天至少跟进 1 次";
-            case "B" -> "B级客户建议每周至少跟进 1 次";
-            case "C" -> "C级客户建议每 2 周至少跟进 1 次";
+            case "A" -> "A级客户：已报价/近期有明确计划，建议每 3 天跟进 1 次";
+            case "B" -> "B级客户：需求较明确/正在比较，建议每周跟进 1 次";
+            case "C" -> "C级客户：已留资但互动弱，建议每 2 周跟进 1 次";
             case "D" -> "D级客户建议季度触达或归档";
             default -> "请先为客户设置 A / B / C / D 等级";
         };

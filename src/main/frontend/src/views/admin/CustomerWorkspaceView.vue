@@ -5,18 +5,22 @@
         <div class="toolbar-title">客户管理与跟进记录</div>
         <el-button type="primary" @click="openCustomerDialog()">新增客户</el-button>
       </div>
+      <div class="public-summary">
+        <div>客户等级会直接带出跟进频率建议，建议先分级再安排跟进计划。</div>
+        <div>新增跟进和推荐前，请先从左侧选中一个客户。</div>
+      </div>
       <el-form :inline="true" :model="filters">
         <el-form-item label="关键词">
           <el-input v-model="filters.keyword" placeholder="编号 / 姓名 / 电话 / 微信" clearable />
         </el-form-item>
         <el-form-item label="来源渠道">
-          <el-select v-model="filters.sourceChannel" clearable style="width: 150px">
+          <el-select v-model="filters.sourceChannel" clearable style="width: 160px" placeholder="请选择来源渠道">
             <el-option v-for="item in dicts.source_channel || []" :key="item.id" :label="item.itemLabel" :value="item.itemKey" />
           </el-select>
         </el-form-item>
         <el-form-item label="客户等级">
-          <el-select v-model="filters.customerLevel" clearable style="width: 120px">
-            <el-option v-for="item in levelOptions" :key="item" :label="item" :value="item" />
+          <el-select v-model="filters.customerLevel" clearable style="width: 360px" placeholder="请选择客户等级">
+            <el-option v-for="item in levelOptions" :key="item.value" :label="item.optionLabel" :value="item.value" />
           </el-select>
         </el-form-item>
         <el-form-item label="下次跟进">
@@ -29,7 +33,7 @@
           />
         </el-form-item>
         <el-form-item label="已归档">
-          <el-select v-model="filters.archived" clearable style="width: 120px">
+          <el-select v-model="filters.archived" clearable style="width: 120px" placeholder="请选择">
             <el-option label="是" :value="true" />
             <el-option label="否" :value="false" />
           </el-select>
@@ -49,7 +53,14 @@
             <el-tag type="info">{{ customers.length }} 条</el-tag>
           </div>
         </template>
-        <el-table :data="customers" border highlight-current-row @row-click="selectCustomer" height="680">
+        <el-table
+          :data="customers"
+          border
+          highlight-current-row
+          @row-click="selectCustomer"
+          height="680"
+          empty-text="暂无客户记录，请先新增客户或调整筛选条件"
+        >
           <el-table-column prop="customerName" label="客户" min-width="110" />
           <el-table-column prop="customerLevel" label="等级" width="68" />
           <el-table-column prop="sourceChannel" label="渠道" min-width="110" show-overflow-tooltip />
@@ -63,7 +74,7 @@
       </el-card>
 
       <div class="customer-detail-column">
-        <el-empty v-if="!detail.customer" description="从左侧选择一个客户查看详情" />
+        <el-empty v-if="!detail.customer" description="请先从左侧选择一个客户，再查看跟进记录和推荐方案" />
         <template v-else>
           <el-card shadow="never">
             <template #header>
@@ -86,20 +97,20 @@
 
             <el-descriptions :column="3" border>
               <el-descriptions-item label="客户编号">{{ detail.customer.leadNo }}</el-descriptions-item>
-              <el-descriptions-item label="联系电话">{{ detail.customer.contactPhone || '-' }}</el-descriptions-item>
-              <el-descriptions-item label="负责人">{{ detail.customer.ownerName || '-' }}</el-descriptions-item>
-              <el-descriptions-item label="性别">{{ detail.customer.gender || '-' }}</el-descriptions-item>
-              <el-descriptions-item label="年龄">{{ detail.customer.age || '-' }}</el-descriptions-item>
-              <el-descriptions-item label="邮箱">{{ detail.customer.email || '-' }}</el-descriptions-item>
-              <el-descriptions-item label="微信">{{ detail.customer.wechatNo || '-' }}</el-descriptions-item>
-              <el-descriptions-item label="地区">{{ detail.customer.region || detail.customer.cityArea || '-' }}</el-descriptions-item>
-              <el-descriptions-item label="来源渠道">{{ detail.customer.sourceChannel || '-' }}</el-descriptions-item>
-              <el-descriptions-item label="初步需求">{{ detail.customer.initialNeedType || '-' }}</el-descriptions-item>
-              <el-descriptions-item label="服务偏好">{{ detail.customer.servicePreference || '-' }}</el-descriptions-item>
-              <el-descriptions-item label="预算">{{ detail.customer.budgetRange || '-' }}</el-descriptions-item>
-              <el-descriptions-item label="最近跟进">{{ detail.customer.lastFollowUpAt || '-' }}</el-descriptions-item>
-              <el-descriptions-item label="下次跟进">{{ detail.customer.followUpAt || '-' }}</el-descriptions-item>
-              <el-descriptions-item label="备注">{{ detail.customer.remark || '-' }}</el-descriptions-item>
+              <el-descriptions-item label="联系电话">{{ detail.customer.contactPhone || '未填写' }}</el-descriptions-item>
+              <el-descriptions-item label="负责人">{{ detail.customer.ownerName || '未分配' }}</el-descriptions-item>
+              <el-descriptions-item label="性别">{{ detail.customer.gender || '未填写' }}</el-descriptions-item>
+              <el-descriptions-item label="年龄">{{ detail.customer.age || '未填写' }}</el-descriptions-item>
+              <el-descriptions-item label="邮箱">{{ detail.customer.email || '未填写' }}</el-descriptions-item>
+              <el-descriptions-item label="微信">{{ detail.customer.wechatNo || '未填写' }}</el-descriptions-item>
+              <el-descriptions-item label="地区">{{ detail.customer.region || detail.customer.cityArea || '未填写' }}</el-descriptions-item>
+              <el-descriptions-item label="来源渠道">{{ detail.customer.sourceChannel || '未填写' }}</el-descriptions-item>
+              <el-descriptions-item label="初步需求">{{ detail.customer.initialNeedType || '未填写' }}</el-descriptions-item>
+              <el-descriptions-item label="服务偏好">{{ detail.customer.servicePreference || '未填写' }}</el-descriptions-item>
+              <el-descriptions-item label="预算">{{ detail.customer.budgetRange || '未填写' }}</el-descriptions-item>
+              <el-descriptions-item label="最近跟进">{{ detail.customer.lastFollowUpAt || '暂无记录' }}</el-descriptions-item>
+              <el-descriptions-item label="下次跟进">{{ detail.customer.followUpAt || '未安排' }}</el-descriptions-item>
+              <el-descriptions-item label="备注">{{ detail.customer.remark || '无补充说明' }}</el-descriptions-item>
             </el-descriptions>
           </el-card>
 
@@ -111,7 +122,8 @@
                   <el-tag type="info">{{ detail.followRecords?.length || 0 }} 条</el-tag>
                 </div>
               </template>
-              <el-timeline>
+              <el-empty v-if="!(detail.followRecords?.length)" description="暂无跟进记录，点击“新增跟进”开始记录客户互动" />
+              <el-timeline v-else>
                 <el-timeline-item
                   v-for="item in detail.followRecords || []"
                   :key="item.id"
@@ -121,15 +133,15 @@
                   <el-card class="timeline-card" shadow="hover">
                     <div class="timeline-head">
                       <span>{{ contactMethodLabel(item.contactMethod) }}</span>
-                      <span class="muted-inline">{{ item.ownerName || '-' }}</span>
+                      <span class="muted-inline">{{ item.ownerName || '未记录负责人' }}</span>
                     </div>
-                    <div><strong>沟通摘要：</strong>{{ item.communicationSummary || '-' }}</div>
-                    <div><strong>客户诉求：</strong>{{ item.customerNeed || '-' }}</div>
-                    <div><strong>我方反馈：</strong>{{ item.ourFeedback || '-' }}</div>
-                    <div><strong>客户反馈：</strong>{{ item.customerFeedback || '-' }}</div>
-                    <div><strong>下一步动作：</strong>{{ item.nextAction || '-' }}</div>
-                    <div class="muted-inline">下次跟进：{{ item.nextFollowUpAt || '-' }}</div>
-                    <div class="muted-inline">等级变更：{{ item.levelBefore || '-' }} → {{ item.levelAfter || '-' }}</div>
+                    <div><strong>沟通摘要：</strong>{{ item.communicationSummary || '未填写' }}</div>
+                    <div><strong>客户诉求：</strong>{{ item.customerNeed || '未填写' }}</div>
+                    <div><strong>我方反馈：</strong>{{ item.ourFeedback || '未填写' }}</div>
+                    <div><strong>客户反馈：</strong>{{ item.customerFeedback || '未填写' }}</div>
+                    <div><strong>下一步动作：</strong>{{ item.nextAction || '未填写' }}</div>
+                    <div class="muted-inline">下次跟进：{{ item.nextFollowUpAt || '未安排' }}</div>
+                    <div class="muted-inline">等级变更：{{ item.levelBefore || '未分级' }} → {{ item.levelAfter || '未分级' }}</div>
                   </el-card>
                 </el-timeline-item>
               </el-timeline>
@@ -142,7 +154,8 @@
                   <el-tag type="success">{{ detail.recommendations?.length || 0 }} 次</el-tag>
                 </div>
               </template>
-              <div class="recommendation-stack">
+              <el-empty v-if="!(detail.recommendations?.length)" description="暂无推荐方案，可为客户推荐单个产品或套餐包" />
+              <div v-else class="recommendation-stack">
                 <el-card
                   v-for="recommendation in detail.recommendations || []"
                   :key="recommendation.id"
@@ -157,7 +170,7 @@
                       </div>
                     </div>
                   </template>
-                  <el-table :data="recommendation.items" size="small" border>
+                  <el-table :data="recommendation.items" size="small" border empty-text="暂无推荐明细">
                     <el-table-column prop="priorityNo" label="优先级" width="84" />
                     <el-table-column prop="itemType" label="类型" width="90" />
                     <el-table-column prop="itemName" label="名称" min-width="160" />
@@ -176,41 +189,41 @@
 
     <el-dialog v-model="customerDialogVisible" :title="customerForm.id ? '编辑客户' : '新增客户'" width="860px">
       <el-form :model="customerForm" label-width="110px" class="grid-form">
-        <el-form-item label="客户姓名"><el-input v-model="customerForm.customerName" /></el-form-item>
-        <el-form-item label="联系电话"><el-input v-model="customerForm.contactPhone" /></el-form-item>
+        <el-form-item label="客户姓名"><el-input v-model="customerForm.customerName" placeholder="请输入客户姓名" clearable /></el-form-item>
+        <el-form-item label="联系电话"><el-input v-model="customerForm.contactPhone" placeholder="请输入联系电话" clearable /></el-form-item>
         <el-form-item label="性别">
-          <el-select v-model="customerForm.gender" style="width: 100%">
+          <el-select v-model="customerForm.gender" style="width: 100%" placeholder="请选择性别">
             <el-option label="男" value="男" />
             <el-option label="女" value="女" />
           </el-select>
         </el-form-item>
         <el-form-item label="年龄"><el-input-number v-model="customerForm.age" :min="0" :max="120" style="width: 100%" /></el-form-item>
-        <el-form-item label="邮箱"><el-input v-model="customerForm.email" /></el-form-item>
-        <el-form-item label="微信"><el-input v-model="customerForm.wechatNo" /></el-form-item>
-        <el-form-item label="地区"><el-input v-model="customerForm.region" /></el-form-item>
+        <el-form-item label="邮箱"><el-input v-model="customerForm.email" placeholder="请输入邮箱，例如 demo@example.com" clearable /></el-form-item>
+        <el-form-item label="微信"><el-input v-model="customerForm.wechatNo" placeholder="请输入微信号" clearable /></el-form-item>
+        <el-form-item label="地区"><el-input v-model="customerForm.region" placeholder="请输入地区，例如 上海浦东" clearable /></el-form-item>
         <el-form-item label="来源渠道">
-          <el-select v-model="customerForm.sourceChannel" style="width: 100%" clearable>
+          <el-select v-model="customerForm.sourceChannel" style="width: 100%" clearable placeholder="请选择来源渠道">
             <el-option v-for="item in dicts.source_channel || []" :key="item.id" :label="item.itemLabel" :value="item.itemKey" />
           </el-select>
         </el-form-item>
         <el-form-item label="客户等级">
-          <el-select v-model="customerForm.customerLevel" style="width: 100%">
-            <el-option v-for="item in levelOptions" :key="item" :label="item" :value="item" />
+          <el-select v-model="customerForm.customerLevel" style="width: 100%" placeholder="请选择客户等级">
+            <el-option v-for="item in levelOptions" :key="item.value" :label="item.optionLabel" :value="item.value" />
           </el-select>
         </el-form-item>
-        <el-form-item label="当前状态"><el-input v-model="customerForm.currentStatus" /></el-form-item>
-        <el-form-item label="推荐人"><el-input v-model="customerForm.referrerName" /></el-form-item>
-        <el-form-item label="初步需求"><el-input v-model="customerForm.initialNeedType" /></el-form-item>
-        <el-form-item label="服务偏好"><el-input v-model="customerForm.servicePreference" /></el-form-item>
-        <el-form-item label="预算范围"><el-input v-model="customerForm.budgetRange" /></el-form-item>
-        <el-form-item label="下次跟进"><el-date-picker v-model="customerForm.followUpAt" type="datetime" value-format="YYYY-MM-DDTHH:mm:ss" style="width: 100%" /></el-form-item>
-        <el-form-item label="建档日期"><el-date-picker v-model="customerForm.entryDate" type="date" value-format="YYYY-MM-DD" style="width: 100%" /></el-form-item>
+        <el-form-item label="当前状态"><el-input v-model="customerForm.currentStatus" placeholder="请输入当前状态，例如 待跟进" clearable /></el-form-item>
+        <el-form-item label="推荐人"><el-input v-model="customerForm.referrerName" placeholder="请输入推荐人或来源人" clearable /></el-form-item>
+        <el-form-item label="初步需求"><el-input v-model="customerForm.initialNeedType" placeholder="请输入客户当前关注的需求" clearable /></el-form-item>
+        <el-form-item label="服务偏好"><el-input v-model="customerForm.servicePreference" placeholder="请输入服务偏好，例如 上门 / 到店" clearable /></el-form-item>
+        <el-form-item label="预算范围"><el-input v-model="customerForm.budgetRange" placeholder="请输入预算范围，例如 3000-5000" clearable /></el-form-item>
+        <el-form-item label="下次跟进"><el-date-picker v-model="customerForm.followUpAt" type="datetime" value-format="YYYY-MM-DDTHH:mm:ss" style="width: 100%" placeholder="请选择下次跟进时间" /></el-form-item>
+        <el-form-item label="建档日期"><el-date-picker v-model="customerForm.entryDate" type="date" value-format="YYYY-MM-DD" style="width: 100%" placeholder="请选择建档日期" /></el-form-item>
         <el-form-item label="归档">
           <el-switch v-model="customerForm.archived" />
         </el-form-item>
       </el-form>
       <el-form :model="customerForm" label-width="110px">
-        <el-form-item label="备注"><el-input v-model="customerForm.remark" type="textarea" :rows="3" /></el-form-item>
+        <el-form-item label="备注"><el-input v-model="customerForm.remark" type="textarea" :rows="3" placeholder="请输入客户补充说明、沟通背景或特别提醒" /></el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="customerDialogVisible = false">取消</el-button>
@@ -220,25 +233,25 @@
 
     <el-dialog v-model="followDialogVisible" title="新增跟进记录" width="760px">
       <el-form :model="followForm" label-width="110px" class="grid-form">
-        <el-form-item label="跟进时间"><el-date-picker v-model="followForm.followAt" type="datetime" value-format="YYYY-MM-DDTHH:mm:ss" style="width: 100%" /></el-form-item>
+        <el-form-item label="跟进时间"><el-date-picker v-model="followForm.followAt" type="datetime" value-format="YYYY-MM-DDTHH:mm:ss" style="width: 100%" placeholder="请选择本次跟进时间" /></el-form-item>
         <el-form-item label="接触方式">
-          <el-select v-model="followForm.contactMethod" style="width: 100%">
+          <el-select v-model="followForm.contactMethod" style="width: 100%" placeholder="请选择接触方式">
             <el-option v-for="item in contactMethods" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </el-form-item>
-        <el-form-item label="下次跟进"><el-date-picker v-model="followForm.nextFollowUpAt" type="datetime" value-format="YYYY-MM-DDTHH:mm:ss" style="width: 100%" /></el-form-item>
+        <el-form-item label="下次跟进"><el-date-picker v-model="followForm.nextFollowUpAt" type="datetime" value-format="YYYY-MM-DDTHH:mm:ss" style="width: 100%" placeholder="请选择下次跟进时间" /></el-form-item>
         <el-form-item label="等级变更">
-          <el-select v-model="followForm.customerLevel" style="width: 100%">
-            <el-option v-for="item in levelOptions" :key="item" :label="item" :value="item" />
+          <el-select v-model="followForm.customerLevel" style="width: 100%" placeholder="请选择更新后的客户等级">
+            <el-option v-for="item in levelOptions" :key="item.value" :label="item.optionLabel" :value="item.value" />
           </el-select>
         </el-form-item>
       </el-form>
       <el-form :model="followForm" label-width="110px">
-        <el-form-item label="沟通摘要"><el-input v-model="followForm.communicationSummary" type="textarea" :rows="2" /></el-form-item>
-        <el-form-item label="客户诉求"><el-input v-model="followForm.customerNeed" type="textarea" :rows="2" /></el-form-item>
-        <el-form-item label="我方反馈"><el-input v-model="followForm.ourFeedback" type="textarea" :rows="2" /></el-form-item>
-        <el-form-item label="客户反馈"><el-input v-model="followForm.customerFeedback" type="textarea" :rows="2" /></el-form-item>
-        <el-form-item label="下一步动作"><el-input v-model="followForm.nextAction" type="textarea" :rows="2" /></el-form-item>
+        <el-form-item label="沟通摘要"><el-input v-model="followForm.communicationSummary" type="textarea" :rows="2" placeholder="请概括本次沟通主题和关键结论" /></el-form-item>
+        <el-form-item label="客户诉求"><el-input v-model="followForm.customerNeed" type="textarea" :rows="2" placeholder="请记录客户当前最关心的诉求或问题" /></el-form-item>
+        <el-form-item label="我方反馈"><el-input v-model="followForm.ourFeedback" type="textarea" :rows="2" placeholder="请记录你给出的建议、方案或承诺" /></el-form-item>
+        <el-form-item label="客户反馈"><el-input v-model="followForm.customerFeedback" type="textarea" :rows="2" placeholder="请记录客户的态度、疑虑或反馈结果" /></el-form-item>
+        <el-form-item label="下一步动作"><el-input v-model="followForm.nextAction" type="textarea" :rows="2" placeholder="请写明下一步计划，例如 发送方案、再次电话跟进" /></el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="followDialogVisible = false">取消</el-button>
@@ -248,20 +261,24 @@
 
     <el-dialog v-model="recommendationDialogVisible" title="新增推荐方案" width="860px">
       <el-form :model="recommendationForm" label-width="110px">
-        <el-form-item label="推荐理由"><el-input v-model="recommendationForm.recommendationReason" type="textarea" :rows="2" /></el-form-item>
-        <el-form-item label="补充说明"><el-input v-model="recommendationForm.remark" type="textarea" :rows="2" /></el-form-item>
+        <el-form-item label="推荐理由"><el-input v-model="recommendationForm.recommendationReason" type="textarea" :rows="2" placeholder="请说明为什么这批产品或套餐适合当前客户" /></el-form-item>
+        <el-form-item label="补充说明"><el-input v-model="recommendationForm.remark" type="textarea" :rows="2" placeholder="可补充报价口径、沟通注意事项或特殊说明" /></el-form-item>
       </el-form>
       <div class="toolbar compact-toolbar">
         <div class="toolbar-title">推荐项</div>
         <el-button @click="addRecommendationItem">新增一项</el-button>
       </div>
+      <div class="public-summary">
+        <div>每个推荐项都需要选择类型和具体内容。</div>
+        <div>可同时推荐单个产品和套餐包，优先级数字越小越靠前。</div>
+      </div>
       <div class="recommendation-editor">
         <div v-for="(item, index) in recommendationForm.items" :key="index" class="recommendation-editor-row">
-          <el-select v-model="item.itemType" style="width: 120px">
+          <el-select v-model="item.itemType" style="width: 120px" placeholder="类型">
             <el-option label="产品" value="PRODUCT" />
             <el-option label="套餐包" value="PACKAGE" />
           </el-select>
-          <el-select v-model="item.itemId" filterable style="flex: 1">
+          <el-select v-model="item.itemId" filterable style="flex: 1" placeholder="请选择推荐项">
             <el-option
               v-for="option in recommendationOptions(item.itemType)"
               :key="`${item.itemType}-${option.id}`"
@@ -270,8 +287,8 @@
             />
           </el-select>
           <el-input-number v-model="item.priorityNo" :min="1" :max="99" />
-          <el-input v-model="item.quotedPrice" placeholder="报价" />
-          <el-input v-model="item.note" placeholder="备注" />
+          <el-input v-model="item.quotedPrice" placeholder="报价，例如 3999" />
+          <el-input v-model="item.note" placeholder="推荐备注" />
           <el-button text type="danger" @click="removeRecommendationItem(index)">删除</el-button>
         </div>
       </div>
@@ -288,6 +305,7 @@ import { onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { api } from '../../api/fransys'
+import { customerLevelHint, customerLevelOptions, isBlank, isValidEmail, isValidPhone } from '../../constants/ui'
 
 const route = useRoute()
 const router = useRouter()
@@ -309,7 +327,10 @@ const filters = reactive<any>({
   nextFollowRange: [],
 })
 
-const levelOptions = ['A', 'B', 'C', 'D']
+const levelOptions = customerLevelOptions.map((item) => ({
+  ...item,
+  optionLabel: `${item.value}级：${item.description}`,
+}))
 const contactMethods = [
   { label: '电话', value: 'PHONE' },
   { label: '微信', value: 'WECHAT' },
@@ -433,16 +454,40 @@ function openCustomerDialog(row?: any) {
 }
 
 function openFollowDialog() {
+  if (!selectedCustomerId.value) {
+    ElMessage.warning('请先从左侧选择一个客户')
+    return
+  }
   resetFollowForm()
   followDialogVisible.value = true
 }
 
 function openRecommendationDialog() {
+  if (!selectedCustomerId.value) {
+    ElMessage.warning('请先从左侧选择一个客户')
+    return
+  }
   resetRecommendationForm()
   recommendationDialogVisible.value = true
 }
 
 async function saveCustomer() {
+  if (isBlank(customerForm.customerName)) {
+    ElMessage.warning('请先填写客户姓名')
+    return
+  }
+  if (!isValidPhone(customerForm.contactPhone)) {
+    ElMessage.warning('请输入有效的联系电话')
+    return
+  }
+  if (!isValidEmail(customerForm.email)) {
+    ElMessage.warning('请输入正确的邮箱地址')
+    return
+  }
+  if (customerForm.age !== undefined && (Number(customerForm.age) < 0 || Number(customerForm.age) > 120)) {
+    ElMessage.warning('年龄需在 0 到 120 之间')
+    return
+  }
   if (customerForm.id) {
     await api.updateCustomer(customerForm.id, customerForm)
   } else {
@@ -459,7 +504,22 @@ async function saveCustomer() {
 }
 
 async function saveFollowRecord() {
-  if (!selectedCustomerId.value) return
+  if (!selectedCustomerId.value) {
+    ElMessage.warning('请先从左侧选择一个客户')
+    return
+  }
+  if (isBlank(followForm.communicationSummary)) {
+    ElMessage.warning('请先填写沟通摘要')
+    return
+  }
+  if (isBlank(followForm.customerNeed)) {
+    ElMessage.warning('请补充客户诉求')
+    return
+  }
+  if (isBlank(followForm.nextAction)) {
+    ElMessage.warning('请填写下一步动作')
+    return
+  }
   await api.saveFollowRecord(selectedCustomerId.value, followForm)
   ElMessage.success('跟进记录已保存')
   followDialogVisible.value = false
@@ -482,7 +542,19 @@ function removeRecommendationItem(index: number | string) {
 }
 
 async function saveRecommendation() {
-  if (!selectedCustomerId.value) return
+  if (!selectedCustomerId.value) {
+    ElMessage.warning('请先从左侧选择一个客户')
+    return
+  }
+  if (!recommendationForm.items.length) {
+    ElMessage.warning('请至少添加一个推荐项')
+    return
+  }
+  const invalidItem = recommendationForm.items.find((item: any) => !item.itemType || !item.itemId)
+  if (invalidItem) {
+    ElMessage.warning('请为每个推荐项选择完整的类型和内容')
+    return
+  }
   const payload = {
     ...recommendationForm,
     items: recommendationForm.items.map((item: any) => ({
@@ -508,7 +580,7 @@ function resetFilters() {
 }
 
 function contactMethodLabel(value: string) {
-  return contactMethods.find((item) => item.value === value)?.label || value || '-'
+  return contactMethods.find((item) => item.value === value)?.label || value || '未记录方式'
 }
 
 onMounted(async () => {
@@ -528,6 +600,15 @@ watch(
     const customerId = Number(value)
     if (customerId) {
       await loadDetail(customerId)
+    }
+  },
+)
+
+watch(
+  () => followForm.customerLevel,
+  (value) => {
+    if (value) {
+      detail.followFrequencyHint = customerLevelHint(value)
     }
   },
 )

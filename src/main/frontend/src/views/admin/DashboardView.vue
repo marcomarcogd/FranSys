@@ -1,5 +1,9 @@
 <template>
   <div class="page-stack">
+    <div class="public-summary">
+      <div>仪表盘聚合客户总量、客户等级和推荐情况，适合日常巡检和工作分配。</div>
+      <div>如果统计为空，通常说明当前还没有录入客户、推荐或相关数据。</div>
+    </div>
     <div class="stat-grid">
       <div v-for="item in stats" :key="item.label" class="stat-card">
         <div class="stat-label">{{ item.label }}</div>
@@ -10,14 +14,14 @@
     <div class="two-column">
       <el-card shadow="never">
         <template #header>来源渠道分布</template>
-        <el-table :data="overview.sourceChannelStats || []" size="small">
+        <el-table :data="overview.sourceChannelStats || []" size="small" empty-text="暂无来源渠道统计">
           <el-table-column prop="label" label="渠道" />
           <el-table-column prop="value" label="数量" width="100" />
         </el-table>
       </el-card>
       <el-card shadow="never">
         <template #header>客户等级分布</template>
-        <el-table :data="overview.customerLevelStats || []" size="small">
+        <el-table :data="overview.customerLevelStats || []" size="small" empty-text="暂无客户等级统计">
           <el-table-column prop="label" label="等级" />
           <el-table-column prop="value" label="数量" width="100" />
         </el-table>
@@ -27,14 +31,14 @@
     <div class="two-column">
       <el-card shadow="never">
         <template #header>推荐类型分布</template>
-        <el-table :data="overview.recommendationTypeStats || []" size="small">
+        <el-table :data="overview.recommendationTypeStats || []" size="small" empty-text="暂无推荐类型统计">
           <el-table-column prop="label" label="类型" />
           <el-table-column prop="value" label="数量" width="100" />
         </el-table>
       </el-card>
       <el-card shadow="never">
         <template #header>最近建档客户</template>
-        <el-table :data="overview.recentCustomers || []" size="small">
+        <el-table :data="overview.recentCustomers || []" size="small" empty-text="暂无最近建档客户">
           <el-table-column prop="leadNo" label="客户编号" width="160" />
           <el-table-column prop="customerName" label="客户姓名" />
           <el-table-column prop="sourceChannel" label="来源渠道" />

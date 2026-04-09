@@ -1,6 +1,7 @@
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
 import { useAuthStore } from '../store/auth'
+import { toFriendlyErrorMessage } from '../constants/ui'
 
 const http = axios.create({
   baseURL: '/',
@@ -36,7 +37,7 @@ http.interceptors.response.use(
     if (payload && payload.code === 0) {
       return payload.data
     }
-    const message = payload?.message || '请求失败'
+    const message = toFriendlyErrorMessage(payload?.message || '请求失败')
     if (isAuthFailureMessage(message)) {
       clearAuthAndRedirect()
     }
@@ -44,7 +45,8 @@ http.interceptors.response.use(
     return Promise.reject(new Error(message))
   },
   (error) => {
-    const message = error.response?.data?.message || error.message || '网络异常'
+    const rawMessage = error.response?.data?.message || error.message || '网络异常'
+    const message = toFriendlyErrorMessage(rawMessage)
     const authStore = useAuthStore()
     const hasToken = !!authStore.token
     if (error.response?.status === 401 || (error.response?.status === 403 && hasToken && location.pathname.startsWith('/admin'))) {
