@@ -30,8 +30,23 @@ public class CustomerLead extends BaseEntity {
     @Column(name = "contact_phone", nullable = false, length = 64)
     private String contactPhone;
 
+    @Column(length = 16)
+    private String gender;
+
+    @Column
+    private Integer age;
+
+    @Column(length = 128)
+    private String email;
+
+    @Column(name = "wechat_no", length = 64)
+    private String wechatNo;
+
     @Column(name = "city_area", length = 128)
     private String cityArea;
+
+    @Column(length = 128)
+    private String region;
 
     @Column(name = "age_range", length = 64)
     private String ageRange;
@@ -99,6 +114,12 @@ public class CustomerLead extends BaseEntity {
 
     @Column(name = "follow_up_at")
     private LocalDateTime followUpAt;
+
+    @Column(name = "last_follow_up_at")
+    private LocalDateTime lastFollowUpAt;
+
+    @Column(nullable = false)
+    private Boolean archived = false;
 
     @Column(columnDefinition = "TEXT")
     private String remark;

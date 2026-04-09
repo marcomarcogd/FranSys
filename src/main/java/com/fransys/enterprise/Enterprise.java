@@ -58,6 +58,9 @@ public class Enterprise extends BaseEntity {
     @Column(name = "special_limit", length = 255)
     private String specialLimit;
 
+    @Column(name = "brand_advantage", length = 1000)
+    private String brandAdvantage;
+
     @Column(nullable = false)
     private Boolean active = true;
 }

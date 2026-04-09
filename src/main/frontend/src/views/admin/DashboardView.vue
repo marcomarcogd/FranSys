@@ -16,24 +16,32 @@
         </el-table>
       </el-card>
       <el-card shadow="never">
-        <template #header>满意度分布</template>
-        <el-table :data="overview.satisfactionStats || []" size="small">
-          <el-table-column prop="label" label="评分" />
+        <template #header>客户等级分布</template>
+        <el-table :data="overview.customerLevelStats || []" size="small">
+          <el-table-column prop="label" label="等级" />
           <el-table-column prop="value" label="数量" width="100" />
         </el-table>
       </el-card>
     </div>
 
-    <el-card shadow="never">
-      <template #header>最新线索</template>
-      <el-table :data="overview.recentLeads || []" size="small">
-        <el-table-column prop="leadNo" label="线索编号" width="160" />
-        <el-table-column prop="customerName" label="客户姓名" />
-        <el-table-column prop="sourceChannel" label="来源渠道" />
-        <el-table-column prop="currentStatus" label="当前状态" />
-        <el-table-column prop="workflowStage" label="流程阶段" />
-      </el-table>
-    </el-card>
+    <div class="two-column">
+      <el-card shadow="never">
+        <template #header>推荐类型分布</template>
+        <el-table :data="overview.recommendationTypeStats || []" size="small">
+          <el-table-column prop="label" label="类型" />
+          <el-table-column prop="value" label="数量" width="100" />
+        </el-table>
+      </el-card>
+      <el-card shadow="never">
+        <template #header>最近建档客户</template>
+        <el-table :data="overview.recentCustomers || []" size="small">
+          <el-table-column prop="leadNo" label="客户编号" width="160" />
+          <el-table-column prop="customerName" label="客户姓名" />
+          <el-table-column prop="sourceChannel" label="来源渠道" />
+          <el-table-column prop="customerLevel" label="客户等级" />
+        </el-table>
+      </el-card>
+    </div>
   </div>
 </template>
 
@@ -44,12 +52,12 @@ import { api } from '../../api/fransys'
 const overview = reactive<any>({})
 
 const stats = computed(() => [
-  { label: '总线索数', value: overview.totalLeads || 0 },
-  { label: '今日新增', value: overview.todayLeads || 0 },
-  { label: '已识别', value: overview.identifiedLeads || 0 },
-  { label: '已匹配', value: overview.matchedLeads || 0 },
-  { label: '交付中', value: overview.deliveringLeads || 0 },
-  { label: '售后跟进', value: overview.afterSalesLeads || 0 },
+  { label: '客户总数', value: overview.totalCustomers || 0 },
+  { label: '今日建档', value: overview.todayCustomers || 0 },
+  { label: 'A级客户', value: overview.aLevelCustomers || 0 },
+  { label: 'B级客户', value: overview.bLevelCustomers || 0 },
+  { label: '到期待跟进', value: overview.dueFollowCount || 0 },
+  { label: '已归档', value: overview.archivedCustomers || 0 },
 ])
 
 onMounted(async () => {

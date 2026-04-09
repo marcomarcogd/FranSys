@@ -14,7 +14,7 @@
           </div>
         </template>
         <el-form :model="form" label-position="top" @submit.prevent="submit">
-          <el-form-item label="用户名">
+          <el-form-item label="账号">
             <el-input v-model="form.username" placeholder="请输入账号" />
           </el-form-item>
           <el-form-item label="密码">

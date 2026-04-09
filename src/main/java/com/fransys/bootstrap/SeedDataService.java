@@ -5,6 +5,13 @@ import com.fransys.dict.DictItem;
 import com.fransys.dict.DictItemRepository;
 import com.fransys.enterprise.Enterprise;
 import com.fransys.enterprise.EnterpriseRepository;
+import com.fransys.product.Product;
+import com.fransys.product.ProductPackage;
+import com.fransys.product.ProductPackageItem;
+import com.fransys.product.ProductPackageItemRepository;
+import com.fransys.product.ProductPackageRepository;
+import com.fransys.product.ProductRepository;
+import java.math.BigDecimal;
 import com.fransys.system.SysRole;
 import com.fransys.system.SysRoleRepository;
 import com.fransys.system.SysUser;
@@ -23,6 +30,9 @@ public class SeedDataService implements CommandLineRunner {
     private final SysUserRepository sysUserRepository;
     private final DictItemRepository dictItemRepository;
     private final EnterpriseRepository enterpriseRepository;
+    private final ProductRepository productRepository;
+    private final ProductPackageRepository productPackageRepository;
+    private final ProductPackageItemRepository productPackageItemRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -31,6 +41,7 @@ public class SeedDataService implements CommandLineRunner {
         seedUsers();
         seedDicts();
         seedEnterprises();
+        seedProductsAndPackages();
     }
 
     private void seedRoles() {
@@ -70,17 +81,14 @@ public class SeedDataService implements CommandLineRunner {
     }
 
     private void seedDicts() {
-        if (dictItemRepository.count() > 0) {
-            return;
-        }
-        seed("source_channel", List.of("熟人推荐", "银行渠道", "私域转介绍", "合作方引荐", "自然咨询"));
+        seed("source_channel", List.of("科普宣传", "老客户", "转介绍", "社交媒体", "广告投放", "自然咨询"));
         seed("channel_trust_level", List.of("强信任", "半信任", "弱信任"));
         seed("service_object", List.of("本人", "父母", "长辈", "家庭成员"));
         seed("need_type", List.of("调理", "康护", "陪护", "上门服务", "到店服务", "其他"));
         seed("service_preference", List.of("上门", "到店", "均可"));
         seed("urgency", List.of("高", "中", "低"));
-        seed("customer_level", List.of("S", "A", "B"));
-        seed("current_status", List.of("待联系", "已沟通", "待评估", "已成交", "暂缓", "交付中", "已回访"));
+        seed("customer_level", List.of("A", "B", "C", "D"));
+        seed("current_status", List.of("待跟进", "跟进中", "已报价", "已推荐", "已成交", "已归档"));
         seed("decision_speed", List.of("快", "中", "慢"));
         seed("price_sensitivity", List.of("高", "中", "低"));
         seed("certification_interest", List.of("强", "中", "弱"));
@@ -94,10 +102,16 @@ public class SeedDataService implements CommandLineRunner {
         seed("repurchase_possibility", List.of("高", "中", "低"));
         seed("customer_lifecycle_status", List.of("首单客户", "活跃客户", "复购客户", "沉默客户", "流失客户"));
         seed("enterprise_performance_level", List.of("优秀", "良好", "一般", "较差"));
+        seed("contact_method", List.of("PHONE", "WECHAT", "EMAIL", "VISIT"));
+        seed("product_category", List.of("基础调理", "康复护理", "陪护服务", "专项方案"));
+        seed("applicable_people", List.of("术后恢复", "长者照护", "慢病管理", "家庭康护"));
     }
 
     private void seed(String dictType, List<String> labels) {
         for (int i = 0; i < labels.size(); i++) {
+            if (dictItemRepository.existsByDictTypeAndItemKey(dictType, labels.get(i))) {
+                continue;
+            }
             DictItem item = new DictItem();
             item.setDictType(dictType);
             item.setItemKey(labels.get(i));
@@ -134,8 +148,59 @@ public class SeedDataService implements CommandLineRunner {
         enterprise.setCaseExperience(cases);
         enterprise.setPriceRange(price);
         enterprise.setServiceTime(serviceTime);
+        enterprise.setBrandAdvantage("本地口碑稳定，服务响应机制成熟");
         enterprise.setWillingToTake(true);
         enterprise.setActive(true);
         enterpriseRepository.save(enterprise);
+    }
+
+    private void seedProductsAndPackages() {
+        if (productRepository.count() > 0 || enterpriseRepository.count() == 0) {
+            return;
+        }
+        List<Enterprise> enterprises = enterpriseRepository.findAll();
+        Product productA = createProduct(enterprises.get(0), "术后康复陪护", "8小时/次", "康复护理", "术后恢复", new BigDecimal("899.00"));
+        createProduct(enterprises.get(1), "高龄长者陪伴", "12小时/次", "陪护服务", "长者照护", new BigDecimal("1280.00"));
+        Product productC = createProduct(enterprises.get(2), "慢病调理方案", "到店 1 次", "基础调理", "慢病管理", new BigDecimal("399.00"));
+
+        if (productPackageRepository.count() == 0) {
+            ProductPackage productPackage = new ProductPackage();
+            productPackage.setName("术后恢复关怀包");
+            productPackage.setApplicableScene("术后两周内家庭恢复");
+            productPackage.setPrice(new BigDecimal("2280.00"));
+            productPackage.setDescription("组合康复陪护与到店调理，适合术后短周期恢复客户");
+            productPackage.setActive(true);
+            ProductPackage saved = productPackageRepository.save(productPackage);
+            createPackageItem(saved, productA, 2, "含上门康复陪护", 1);
+            createPackageItem(saved, productC, 1, "含一次调理到店服务", 2);
+        }
+    }
+
+    private Product createProduct(Enterprise enterprise, String name, String specification, String category, String people, BigDecimal price) {
+        Product product = new Product();
+        product.setEnterpriseId(enterprise.getId());
+        product.setEnterpriseName(enterprise.getName());
+        product.setName(name);
+        product.setSpecification(specification);
+        product.setCategory(category);
+        product.setApplicablePeople(people);
+        product.setPrice(price);
+        product.setServiceProcess("初步评估 -> 服务安排 -> 服务执行 -> 回访记录");
+        product.setRegulatoryInfo("平台内部备案，按规范留档");
+        product.setDescription("FranSys 示例产品数据");
+        product.setActive(true);
+        return productRepository.save(product);
+    }
+
+    private void createPackageItem(ProductPackage productPackage, Product product, int quantity, String note, int sortOrder) {
+        ProductPackageItem item = new ProductPackageItem();
+        item.setPackageId(productPackage.getId());
+        item.setProductId(product.getId());
+        item.setProductName(product.getName());
+        item.setEnterpriseName(product.getEnterpriseName());
+        item.setQuantity(quantity);
+        item.setItemNote(note);
+        item.setSortOrder(sortOrder);
+        productPackageItemRepository.save(item);
     }
 }

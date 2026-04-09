@@ -19,7 +19,7 @@
       <header class="admin-header">
         <div>
           <div class="header-title">{{ route.meta?.title || 'FranSys' }}</div>
-          <div class="header-subtitle">客户识别、匹配交付、售后复购一体化管理</div>
+          <div class="header-subtitle">客户跟进、企业供给、产品套餐与推荐一体化管理</div>
         </div>
         <div class="header-actions">
           <el-tag type="success">{{ authStore.user?.displayName || '内部账号' }}</el-tag>
@@ -49,8 +49,16 @@ const menuRoutes = computed(() => {
 })
 
 const activeMenuPath = computed(() => {
-  if (route.path.startsWith('/admin/detail/')) {
-    return '/admin/leads'
+  if (
+    route.path.startsWith('/admin/detail/')
+    || route.path.startsWith('/admin/leads')
+    || route.path.startsWith('/admin/identification')
+    || route.path.startsWith('/admin/assessment')
+    || route.path.startsWith('/admin/match')
+    || route.path.startsWith('/admin/delivery')
+    || route.path.startsWith('/admin/aftersales')
+  ) {
+    return '/admin/customers'
   }
   return route.path
 })

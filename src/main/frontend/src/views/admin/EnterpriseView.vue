@@ -9,6 +9,7 @@
       <el-table-column prop="contactPerson" label="联系人" width="120" />
       <el-table-column prop="phone" label="联系方式" width="140" />
       <el-table-column prop="serviceArea" label="服务区域" min-width="180" />
+      <el-table-column prop="brandAdvantage" label="品牌优势" min-width="220" show-overflow-tooltip />
       <el-table-column prop="certificationStatus" label="认证状态" width="100" />
       <el-table-column prop="certificationLevel" label="认证等级" width="100" />
       <el-table-column prop="priceRange" label="价格区间" width="140" />
@@ -19,7 +20,7 @@
       </el-table-column>
     </el-table>
 
-    <el-dialog v-model="dialogVisible" title="企业信息" width="720px">
+    <el-dialog v-model="dialogVisible" title="企业信息" width="760px">
       <el-form :model="form" label-width="110px" class="grid-form">
         <el-form-item label="企业名称"><el-input v-model="form.name" /></el-form-item>
         <el-form-item label="联系人"><el-input v-model="form.contactPerson" /></el-form-item>
@@ -35,6 +36,9 @@
         <el-form-item label="价格区间"><el-input v-model="form.priceRange" /></el-form-item>
         <el-form-item label="服务时间"><el-input v-model="form.serviceTime" /></el-form-item>
         <el-form-item label="特殊限制"><el-input v-model="form.specialLimit" /></el-form-item>
+      </el-form>
+      <el-form :model="form" label-width="110px">
+        <el-form-item label="品牌优势"><el-input v-model="form.brandAdvantage" type="textarea" :rows="3" /></el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
@@ -70,6 +74,7 @@ function resetForm() {
     priceRange: '',
     serviceTime: '',
     specialLimit: '',
+    brandAdvantage: '',
     active: true,
     willingToTake: true,
   })

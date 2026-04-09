@@ -1,6 +1,6 @@
 package com.fransys.workflow;
 
-import com.fransys.common.enums.WorkflowStage;
+import com.fransys.customer.CustomerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -8,20 +8,20 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class DashboardService {
 
-    private final LeadWorkflowService leadWorkflowService;
+    private final CustomerService customerService;
 
     public WorkflowDtos.DashboardOverviewResponse overview() {
         return new WorkflowDtos.DashboardOverviewResponse(
-                leadWorkflowService.totalLeads(),
-                leadWorkflowService.countTodayLeads(),
-                leadWorkflowService.countByStage(WorkflowStage.IDENTIFIED),
-                leadWorkflowService.countByStage(WorkflowStage.MATCHED),
-                leadWorkflowService.countByStage(WorkflowStage.DELIVERING),
-                leadWorkflowService.countByStage(WorkflowStage.AFTER_SALES),
-                leadWorkflowService.sourceChannelStats(),
-                leadWorkflowService.satisfactionStats(),
-                leadWorkflowService.repurchaseStats(),
-                leadWorkflowService.recentLeads()
+                customerService.totalCustomers(),
+                customerService.todayCustomers(),
+                customerService.countByLevel("A"),
+                customerService.countByLevel("B"),
+                customerService.dueFollowCount(),
+                customerService.archivedCount(),
+                customerService.sourceChannelStats(),
+                customerService.customerLevelStats(),
+                customerService.recommendationTypeStats(),
+                customerService.recentCustomers()
         );
     }
 }

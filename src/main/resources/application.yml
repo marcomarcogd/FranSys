@@ -36,3 +36,4 @@ app:
     access-token-minutes: 720
   public-feedback:
     expire-days: 30
+  upload-dir: ${APP_UPLOAD_DIR:uploads}

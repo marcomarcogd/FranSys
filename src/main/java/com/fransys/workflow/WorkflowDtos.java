@@ -158,16 +158,16 @@ public class WorkflowDtos {
     }
 
     public record DashboardOverviewResponse(
-            long totalLeads,
-            long todayLeads,
-            long identifiedLeads,
-            long matchedLeads,
-            long deliveringLeads,
-            long afterSalesLeads,
+            long totalCustomers,
+            long todayCustomers,
+            long aLevelCustomers,
+            long bLevelCustomers,
+            long dueFollowCount,
+            long archivedCustomers,
             List<DashboardStat> sourceChannelStats,
-            List<DashboardStat> satisfactionStats,
-            List<DashboardStat> repurchaseStats,
-            List<com.fransys.lead.LeadDtos.LeadListItem> recentLeads) {
+            List<DashboardStat> customerLevelStats,
+            List<DashboardStat> recommendationTypeStats,
+            List<com.fransys.customer.CustomerDtos.CustomerListItem> recentCustomers) {
     }
 
     public record GroupedDictResponse(Map<String, List<DictItem>> items) {

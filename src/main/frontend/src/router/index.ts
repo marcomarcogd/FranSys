@@ -3,9 +3,10 @@ import { useAuthStore } from '../store/auth'
 import AdminLayout from '../layouts/AdminLayout.vue'
 import LoginView from '../views/LoginView.vue'
 import DashboardView from '../views/admin/DashboardView.vue'
-import LeadBoardView from '../views/admin/LeadBoardView.vue'
-import LeadDetailView from '../views/admin/LeadDetailView.vue'
+import CustomerWorkspaceView from '../views/admin/CustomerWorkspaceView.vue'
 import EnterpriseView from '../views/admin/EnterpriseView.vue'
+import ProductView from '../views/admin/ProductView.vue'
+import PackageView from '../views/admin/PackageView.vue'
 import DictView from '../views/admin/DictView.vue'
 import SystemView from '../views/admin/SystemView.vue'
 import PublicLeadView from '../views/public/PublicLeadView.vue'
@@ -30,14 +31,17 @@ const routes = [
     redirect: '/admin/dashboard',
     children: [
       { name: 'admin-dashboard', path: 'dashboard', component: DashboardView, meta: { title: '仪表盘', icon: 'DataBoard' } },
-      { name: 'admin-leads', path: 'leads', component: LeadBoardView, meta: { title: '客户主线台账', icon: 'Tickets', focusTab: 'identification', workflowStages: [] } },
-      { name: 'admin-identification', path: 'identification', component: LeadBoardView, meta: { title: '客户识别与分级', icon: 'User', focusTab: 'identification', workflowStages: ['NEW', 'IDENTIFIED'] } },
-      { name: 'admin-assessment', path: 'assessment', component: LeadBoardView, meta: { title: '需求评估', icon: 'DocumentChecked', focusTab: 'assessment', workflowStages: ['ASSESSED'] } },
-      { name: 'admin-match', path: 'match', component: LeadBoardView, meta: { title: '企业匹配与推荐', icon: 'Connection', focusTab: 'match', workflowStages: ['MATCHED'] } },
-      { name: 'admin-delivery', path: 'delivery', component: LeadBoardView, meta: { title: '交付监督与回访', icon: 'Checked', focusTab: 'delivery', workflowStages: ['DELIVERING', 'DELIVERED'] } },
-      { name: 'admin-aftersales', path: 'aftersales', component: LeadBoardView, meta: { title: '售后复购跟进', icon: 'RefreshRight', focusTab: 'aftersales', workflowStages: ['AFTER_SALES'] } },
-      { name: 'admin-detail', path: 'detail/:id', component: LeadDetailView, meta: { title: '客户详情', hidden: true } },
+      { name: 'admin-customers', path: 'customers', component: CustomerWorkspaceView, meta: { title: '客户管理', icon: 'UserFilled' } },
+      { path: 'leads', redirect: '/admin/customers' },
+      { path: 'identification', redirect: '/admin/customers' },
+      { path: 'assessment', redirect: '/admin/customers' },
+      { path: 'match', redirect: '/admin/customers' },
+      { path: 'delivery', redirect: '/admin/customers' },
+      { path: 'aftersales', redirect: '/admin/customers' },
+      { path: 'detail/:id', redirect: (to: any) => `/admin/customers?customerId=${to.params.id}` },
       { name: 'admin-enterprises', path: 'enterprises', component: EnterpriseView, meta: { title: '企业库', icon: 'OfficeBuilding' } },
+      { name: 'admin-products', path: 'products', component: ProductView, meta: { title: '产品库', icon: 'Goods' } },
+      { name: 'admin-packages', path: 'packages', component: PackageView, meta: { title: '产品套餐包', icon: 'Box' } },
       { name: 'admin-dicts', path: 'dicts', component: DictView, meta: { title: '字典配置', icon: 'Collection' } },
       { name: 'admin-system', path: 'system', component: SystemView, meta: { title: '用户与角色', icon: 'Setting' } },
     ],

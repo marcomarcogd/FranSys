@@ -1,6 +1,7 @@
 package com.fransys.workflow;
 
 import com.fransys.common.api.ApiResponse;
+import com.fransys.customer.CustomerService;
 import com.fransys.lead.CustomerLead;
 import com.fransys.lead.LeadDtos;
 import jakarta.validation.Valid;
@@ -17,11 +18,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class PublicController {
 
+    private final CustomerService customerService;
     private final LeadWorkflowService leadWorkflowService;
 
     @PostMapping("/leads")
     public ApiResponse<CustomerLead> createLead(@Valid @RequestBody LeadDtos.PublicLeadRequest request) {
-        return ApiResponse.success(leadWorkflowService.createPublicLead(request));
+        return ApiResponse.success(customerService.createPublicCustomer(request));
     }
 
     @GetMapping("/feedback/{token}")

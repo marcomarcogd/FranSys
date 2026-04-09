@@ -17,6 +17,11 @@ public class LeadDtos {
     public record PublicLeadRequest(
             @NotBlank(message = "客户姓名不能为空") String customerName,
             @NotBlank(message = "联系方式不能为空") String contactPhone,
+            String gender,
+            Integer age,
+            String email,
+            String wechatNo,
+            String region,
             String cityArea,
             String ageRange,
             String familyStructure,
