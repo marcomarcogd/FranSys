@@ -60,9 +60,12 @@
             </el-select>
           </el-form-item>
           <el-form-item label="客户等级">
-            <el-select v-model="identification.customerLevel" style="width: 100%">
-              <el-option v-for="item in dicts.customer_level || []" :key="item.id" :label="item.itemLabel" :value="item.itemKey" />
-            </el-select>
+            <div style="width: 100%">
+              <el-select v-model="identification.customerLevel" style="width: 100%">
+                <el-option v-for="item in dicts.customer_level || []" :key="item.id" :label="item.itemLabel" :value="item.itemKey" />
+              </el-select>
+              <IntentLevelGuideDialog />
+            </div>
           </el-form-item>
           <el-form-item label="当前状态">
             <el-select v-model="identification.currentStatus" style="width: 100%">
@@ -266,6 +269,7 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { api } from '../../api/fransys'
+import IntentLevelGuideDialog from '../../components/IntentLevelGuideDialog.vue'
 
 const route = useRoute()
 const router = useRouter()

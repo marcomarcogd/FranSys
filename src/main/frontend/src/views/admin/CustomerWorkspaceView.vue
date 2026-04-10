@@ -21,9 +21,12 @@
           </el-select>
         </el-form-item>
         <el-form-item label="意向等级">
-          <el-select v-model="filters.customerLevel" clearable style="width: 320px" placeholder="请选择">
-            <el-option v-for="item in intentLevelOptions" :key="item.value" :label="item.optionLabel" :value="item.value" />
-          </el-select>
+          <div style="display: flex; align-items: center; gap: 8px">
+            <el-select v-model="filters.customerLevel" clearable style="width: 320px" placeholder="请选择">
+              <el-option v-for="item in intentLevelOptions" :key="item.value" :label="item.optionLabel" :value="item.value" />
+            </el-select>
+            <IntentLevelGuideDialog />
+          </div>
         </el-form-item>
         <el-form-item label="价值等级">
           <el-select v-model="filters.customerValueLevel" clearable style="width: 220px" placeholder="请选择">
@@ -295,6 +298,7 @@
             <el-select v-model="customerForm.customerLevel" style="width: 100%" placeholder="请选择">
               <el-option v-for="item in intentLevelOptions" :key="item.value" :label="item.optionLabel" :value="item.value" />
             </el-select>
+            <IntentLevelGuideDialog />
             <div class="field-help">{{ customerLevelHint(customerForm.customerLevel) }}</div>
           </div>
         </el-form-item>
@@ -364,6 +368,7 @@
             <el-select v-model="followForm.customerLevel" style="width: 100%" placeholder="请选择">
               <el-option v-for="item in intentLevelOptions" :key="item.value" :label="item.optionLabel" :value="item.value" />
             </el-select>
+            <IntentLevelGuideDialog />
             <div class="field-help">{{ customerLevelHint(followForm.customerLevel) }}</div>
           </div>
         </el-form-item>
@@ -431,6 +436,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { api } from '../../api/fransys'
 import { useAuthStore } from '../../store/auth'
+import IntentLevelGuideDialog from '../../components/IntentLevelGuideDialog.vue'
 import {
   customerLevelHint,
   customerLevelLabel,

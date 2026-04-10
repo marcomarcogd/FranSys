@@ -3,19 +3,19 @@ export const customerLevelOptions = [
     value: 'A',
     shortLabel: 'A级',
     meaning: '高意向',
-    followAdvice: '建议每 3 天跟进 1 次',
+    followAdvice: '建议每3天1次',
   },
   {
     value: 'B',
     shortLabel: 'B级',
     meaning: '潜力',
-    followAdvice: '建议每周跟进 1 次',
+    followAdvice: '建议每周1次',
   },
   {
     value: 'C',
     shortLabel: 'C级',
     meaning: '普通',
-    followAdvice: '建议每 2 周跟进 1 次',
+    followAdvice: '建议每2周1次',
   },
   {
     value: 'D',
@@ -24,6 +24,37 @@ export const customerLevelOptions = [
     followAdvice: '建议季度触达或归档',
   },
 ]
+
+export const intentLevelGuideRows = [
+  {
+    value: 'A',
+    shortLabel: 'A级',
+    criteria: '已报价/方案审核中/近期有明确采购计划',
+    followFrequency: '每3天1次',
+    tagType: 'danger',
+  },
+  {
+    value: 'B',
+    shortLabel: 'B级',
+    criteria: '需求匹配但未报价/正在对比竞品',
+    followFrequency: '每周1次',
+    tagType: 'warning',
+  },
+  {
+    value: 'C',
+    shortLabel: 'C级',
+    criteria: '仅留资未互动/行业相关但无迫切需求',
+    followFrequency: '每2周1次',
+    tagType: 'info',
+  },
+  {
+    value: 'D',
+    shortLabel: 'D级',
+    criteria: '超3个月无响应/联系方式无效',
+    followFrequency: '季度触达或归档',
+    tagType: '',
+  },
+] as const
 
 export const customerValueLevelOptions = [
   {
