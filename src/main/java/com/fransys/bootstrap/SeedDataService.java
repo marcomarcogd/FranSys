@@ -1,5 +1,6 @@
 package com.fransys.bootstrap;
 
+import com.fransys.common.enums.AccountLevel;
 import com.fransys.common.enums.RoleCode;
 import com.fransys.dict.DictItem;
 import com.fransys.dict.DictItemRepository;
@@ -62,22 +63,41 @@ public class SeedDataService implements CommandLineRunner {
     }
 
     private void seedUsers() {
-        if (sysUserRepository.count() > 0) {
-            return;
-        }
-        createUser("admin", "Admin@123", "系统管理员", RoleCode.ROLE_ADMIN.name());
-        createUser("sales", "Sales@123", "销售顾问", RoleCode.ROLE_SALES.name());
-        createUser("ops", "Ops@123", "运营专员", RoleCode.ROLE_OPERATIONS.name());
+        SysUser admin = ensureUser("admin", "Admin@123", "系统管理员", RoleCode.ROLE_ADMIN.name(), AccountLevel.LEADER, null);
+        SysUser salesLeader = ensureUser("sales_leader", "Leader@123", "销售主管", RoleCode.ROLE_SALES.name(), AccountLevel.LEADER, admin.getId());
+        ensureUser("sales", "Sales@123", "销售顾问", RoleCode.ROLE_SALES.name(), AccountLevel.STAFF, salesLeader.getId());
+        ensureUser("ops", "Ops@123", "运营专员", RoleCode.ROLE_OPERATIONS.name(), AccountLevel.STAFF, null);
     }
 
-    private void createUser(String username, String password, String displayName, String roleCode) {
-        SysUser user = new SysUser();
-        user.setUsername(username);
-        user.setPassword(passwordEncoder.encode(password));
-        user.setDisplayName(displayName);
-        user.setRoleCode(roleCode);
-        user.setEnabled(true);
-        sysUserRepository.save(user);
+    private SysUser ensureUser(
+            String username,
+            String password,
+            String displayName,
+            String roleCode,
+            AccountLevel accountLevel,
+            Long managerUserId) {
+        SysUser user = sysUserRepository.findByUsername(username).orElseGet(SysUser::new);
+        if (user.getId() == null) {
+            user.setUsername(username);
+            user.setPassword(passwordEncoder.encode(password));
+            user.setDisplayName(displayName);
+            user.setRoleCode(roleCode);
+            user.setEnabled(true);
+        }
+        if (user.getAccountLevel() == null) {
+            user.setAccountLevel(accountLevel);
+        }
+        if ("sales".equals(username) || "sales_leader".equals(username) || "admin".equals(username) || "ops".equals(username)) {
+            user.setAccountLevel(accountLevel);
+        }
+        if ("sales".equals(username)) {
+            user.setManagerUserId(managerUserId);
+        } else if ("sales_leader".equals(username)) {
+            user.setManagerUserId(managerUserId);
+        } else if (user.getManagerUserId() == null && managerUserId != null) {
+            user.setManagerUserId(managerUserId);
+        }
+        return sysUserRepository.save(user);
     }
 
     private void seedDicts() {
@@ -88,7 +108,7 @@ public class SeedDataService implements CommandLineRunner {
         seed("service_preference", List.of("上门", "到店", "均可"));
         seed("urgency", List.of("高", "中", "低"));
         seed("customer_level", List.of("A", "B", "C", "D"));
-        seed("current_status", List.of("待跟进", "跟进中", "已报价", "已推荐", "已成交", "已归档"));
+        seed("current_status", List.of("待分配", "待跟进", "跟进中", "已报价", "已推荐", "已成交", "已归档"));
         seed("decision_speed", List.of("快", "中", "慢"));
         seed("price_sensitivity", List.of("高", "中", "低"));
         seed("certification_interest", List.of("强", "中", "弱"));

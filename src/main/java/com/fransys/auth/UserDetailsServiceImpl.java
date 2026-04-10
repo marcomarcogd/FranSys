@@ -23,6 +23,8 @@ public class UserDetailsServiceImpl implements UserDetailsService {
                 user.getPassword(),
                 user.getDisplayName(),
                 user.getRoleCode(),
+                user.getAccountLevel().name(),
+                user.getManagerUserId(),
                 user.getEnabled()
         );
     }

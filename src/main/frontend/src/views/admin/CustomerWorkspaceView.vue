@@ -8,7 +8,7 @@
       <div class="section-toolbar">
         <div class="section-title-group">
           <div class="section-title">筛选条件</div>
-          <div class="section-subtitle">按客户信息、等级和跟进时间快速定位目标客户</div>
+          <div class="section-subtitle">{{ scopeHint }}</div>
         </div>
       </div>
       <el-form :inline="true" :model="filters">
@@ -21,9 +21,27 @@
           </el-select>
         </el-form-item>
         <el-form-item label="客户等级">
-          <el-select v-model="filters.customerLevel" clearable style="width: 340px" placeholder="请选择">
+          <el-select v-model="filters.customerLevel" clearable style="width: 320px" placeholder="请选择">
             <el-option v-for="item in levelOptions" :key="item.value" :label="item.optionLabel" :value="item.value" />
           </el-select>
+        </el-form-item>
+        <el-form-item v-if="canManageOwnership" label="负责人">
+          <el-select
+            v-model="filters.ownerId"
+            clearable
+            filterable
+            style="width: 180px"
+            placeholder="全部负责人"
+            :disabled="filters.unassignedOnly"
+          >
+            <el-option v-for="user in assignableUsers" :key="user.id" :label="user.displayName" :value="user.id" />
+          </el-select>
+        </el-form-item>
+        <el-form-item v-if="canViewUnassigned" label="包含未分配">
+          <el-switch v-model="filters.includeUnassigned" :disabled="filters.unassignedOnly" />
+        </el-form-item>
+        <el-form-item v-if="canViewUnassigned" label="仅看未分配">
+          <el-switch v-model="filters.unassignedOnly" />
         </el-form-item>
         <el-form-item label="最近跟进">
           <el-date-picker
@@ -44,7 +62,7 @@
           />
         </el-form-item>
         <el-form-item label="状态">
-          <el-select v-model="filters.archived" clearable style="width: 120px" placeholder="请选择">
+          <el-select v-model="filters.archived" clearable style="width: 140px" placeholder="请选择">
             <el-option label="活跃" :value="false" />
             <el-option label="归档" :value="true" />
           </el-select>
@@ -62,7 +80,7 @@
           <div class="section-toolbar">
             <div class="section-title-group">
               <div class="section-title">客户列表</div>
-              <div class="section-subtitle">按优先级排列，便于快速进入跟进</div>
+              <div class="section-subtitle">{{ scopeLabel }}内的客户按待跟进优先显示</div>
             </div>
             <el-tag type="info">{{ customers.length }} 位</el-tag>
           </div>
@@ -78,17 +96,21 @@
           @row-click="selectCustomer"
         >
           <el-table-column prop="customerName" label="客户" min-width="110" />
-          <el-table-column label="等级" width="80">
+          <el-table-column label="等级" width="82">
             <template #default="{ row }">
               <el-tag effect="plain">{{ customerLevelShortLabel(row.customerLevel) }}</el-tag>
             </template>
           </el-table-column>
           <el-table-column prop="sourceChannel" label="来源" min-width="110" show-overflow-tooltip />
-          <el-table-column prop="ownerName" label="负责人" width="96" />
+          <el-table-column prop="ownerName" label="负责人" width="110">
+            <template #default="{ row }">{{ row.ownerName || '未分配' }}</template>
+          </el-table-column>
           <el-table-column prop="followUpAt" label="下次跟进" min-width="165" />
-          <el-table-column label="状态" width="76">
+          <el-table-column label="状态" width="92">
             <template #default="{ row }">
-              <el-tag :type="row.archived ? 'info' : 'success'">{{ row.archived ? '归档' : '活跃' }}</el-tag>
+              <el-tag :type="row.archived ? 'info' : row.ownerId ? 'success' : 'warning'">
+                {{ row.archived ? '归档' : row.ownerId ? '活跃' : '待分配' }}
+              </el-tag>
             </template>
           </el-table-column>
         </el-table>
@@ -109,12 +131,17 @@
                   <div class="customer-name-line">
                     <span class="section-title">{{ detail.customer.customerName }}</span>
                     <el-tag>{{ customerLevelShortLabel(detail.customer.customerLevel) }}</el-tag>
-                    <el-tag type="warning">{{ detail.customer.currentStatus || '待跟进' }}</el-tag>
+                    <el-tag :type="detail.customer.ownerId ? 'warning' : 'danger'">
+                      {{ detail.customer.currentStatus || '待跟进' }}
+                    </el-tag>
                   </div>
                   <div class="section-subtitle">{{ detail.followFrequencyHint }}</div>
                 </div>
                 <div class="header-actions">
                   <el-button @click="openCustomerDialog(detail.customer)">编辑资料</el-button>
+                  <el-button v-if="canManageOwnership" @click="openCustomerDialog(detail.customer)">
+                    {{ detail.customer.ownerId ? '调整归属' : '分配客户' }}
+                  </el-button>
                 </div>
               </div>
             </template>
@@ -152,10 +179,7 @@
                   </div>
                 </div>
               </template>
-              <el-empty
-                v-if="!(detail.followRecords?.length)"
-                description="还没有跟进记录，先补一条本次沟通情况"
-              >
+              <el-empty v-if="!(detail.followRecords?.length)" description="还没有跟进记录，先补一条本次沟通情况">
                 <el-button type="primary" @click="openFollowDialog">新增跟进</el-button>
               </el-empty>
               <el-timeline v-else>
@@ -197,10 +221,7 @@
                   </div>
                 </div>
               </template>
-              <el-empty
-                v-if="!(detail.recommendations?.length)"
-                description="还没有推荐方案，可先添加适合客户的产品或套餐"
-              >
+              <el-empty v-if="!(detail.recommendations?.length)" description="还没有推荐方案，可先添加适合客户的产品或套餐">
                 <el-button type="success" @click="openRecommendationDialog">新增推荐</el-button>
               </el-empty>
               <div v-else class="recommendation-stack">
@@ -263,6 +284,11 @@
             </el-select>
             <div class="field-help">{{ customerLevelHint(customerForm.customerLevel) }}</div>
           </div>
+        </el-form-item>
+        <el-form-item v-if="canManageOwnership" label="负责人">
+          <el-select v-model="customerForm.ownerId" clearable filterable style="width: 100%" placeholder="请选择负责人">
+            <el-option v-for="user in assignableUsers" :key="user.id" :label="user.displayName" :value="user.id" />
+          </el-select>
         </el-form-item>
         <el-form-item label="当前状态"><el-input v-model="customerForm.currentStatus" placeholder="例如 待沟通、方案沟通中" clearable /></el-form-item>
         <el-form-item label="推荐人"><el-input v-model="customerForm.referrerName" placeholder="如有推荐人可填写" clearable /></el-form-item>
@@ -382,10 +408,11 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref, watch } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { api } from '../../api/fransys'
+import { useAuthStore } from '../../store/auth'
 import {
   customerLevelHint,
   customerLevelOptionLabel,
@@ -399,20 +426,38 @@ import {
 
 const route = useRoute()
 const router = useRouter()
+const authStore = useAuthStore()
 
 const dicts = reactive<any>({})
 const customers = ref<any[]>([])
 const detail = reactive<any>({ customer: null, followRecords: [], recommendations: [], followFrequencyHint: '' })
 const selectedCustomerId = ref<number | null>(null)
+const assignableUsers = ref<any[]>([])
 
 const customerDialogVisible = ref(false)
 const followDialogVisible = ref(false)
 const recommendationDialogVisible = ref(false)
 
+const canManageOwnership = computed(() => authStore.user?.roleCode === 'ROLE_ADMIN' || authStore.user?.accountLevel === 'LEADER')
+const canViewUnassigned = computed(() => canManageOwnership.value)
+const scopeLabel = computed(() => {
+  if (authStore.user?.roleCode === 'ROLE_ADMIN') return '全部客户'
+  if (authStore.user?.accountLevel === 'LEADER') return '团队客户'
+  return '我的客户'
+})
+const scopeHint = computed(() => {
+  if (authStore.user?.roleCode === 'ROLE_ADMIN') return '管理员可查看全部客户，并处理待分配客户。'
+  if (authStore.user?.accountLevel === 'LEADER') return '主管可查看自己及下属客户，也可处理待分配客户。'
+  return '当前只显示你本人负责的客户。'
+})
+
 const filters = reactive<any>({
   keyword: '',
   sourceChannel: '',
   customerLevel: '',
+  ownerId: undefined,
+  includeUnassigned: true,
+  unassignedOnly: false,
   archived: undefined,
   lastFollowRange: [],
   nextFollowRange: [],
@@ -422,6 +467,7 @@ const levelOptions = customerLevelOptions.map((item) => ({
   ...item,
   optionLabel: customerLevelOptionLabel(item.value),
 }))
+
 const contactMethods = [
   { label: '电话', value: 'PHONE' },
   { label: '微信', value: 'WECHAT' },
@@ -447,13 +493,14 @@ function resetCustomerForm() {
     region: '',
     sourceChannel: '',
     customerLevel: 'B',
-    currentStatus: '待跟进',
+    currentStatus: canManageOwnership.value ? '待分配' : '待跟进',
     referrerName: '',
     initialNeedType: '',
     servicePreference: '',
     budgetRange: '',
     entryDate: '',
     followUpAt: '',
+    ownerId: undefined,
     remark: '',
     archived: false,
   })
@@ -491,12 +538,25 @@ function recommendationOptions(itemType: string) {
   return itemType === 'PACKAGE' ? packages.value : products.value
 }
 
+async function loadAssignableUsers() {
+  if (!canManageOwnership.value) {
+    assignableUsers.value = []
+    return
+  }
+  assignableUsers.value = await api.assignableUsers()
+}
+
 async function loadCustomers() {
   const params: any = {
     keyword: filters.keyword,
     sourceChannel: filters.sourceChannel,
     customerLevel: filters.customerLevel,
     archived: filters.archived,
+  }
+  if (canManageOwnership.value) {
+    params.ownerId = filters.ownerId
+    params.includeUnassigned = filters.includeUnassigned
+    params.unassignedOnly = filters.unassignedOnly
   }
   if (filters.lastFollowRange?.length === 2) {
     params.lastFollowStart = filters.lastFollowRange[0]
@@ -524,8 +584,14 @@ async function loadDetail(customerId: number | null) {
 async function ensureSelection() {
   const queryId = Number(route.query.customerId)
   if (queryId) {
-    await loadDetail(queryId)
-    return
+    try {
+      await loadDetail(queryId)
+      return
+    } catch {
+      if (!customers.value.find((item) => item.id === queryId)) {
+        await router.replace({ path: '/admin/customers' })
+      }
+    }
   }
   if (!selectedCustomerId.value && customers.value.length) {
     await selectCustomer(customers.value[0])
@@ -543,7 +609,7 @@ async function selectCustomer(row: any) {
 function openCustomerDialog(row?: any) {
   resetCustomerForm()
   if (row) {
-    Object.assign(customerForm, row)
+    Object.assign(customerForm, row, { ownerId: row.ownerId ?? undefined })
   }
   customerDialogVisible.value = true
 }
@@ -583,10 +649,14 @@ async function saveCustomer() {
     ElMessage.warning('年龄需在 0 到 120 之间')
     return
   }
+  const payload = {
+    ...customerForm,
+    ownerId: canManageOwnership.value ? customerForm.ownerId ?? null : undefined,
+  }
   if (customerForm.id) {
-    await api.updateCustomer(customerForm.id, customerForm)
+    await api.updateCustomer(customerForm.id, payload)
   } else {
-    const saved = await api.createCustomer(customerForm)
+    const saved = await api.createCustomer(payload)
     customerForm.id = saved.id
   }
   ElMessage.success('客户资料已保存')
@@ -668,6 +738,9 @@ function resetFilters() {
     keyword: '',
     sourceChannel: '',
     customerLevel: '',
+    ownerId: undefined,
+    includeUnassigned: canViewUnassigned.value,
+    unassignedOnly: false,
     archived: undefined,
     lastFollowRange: [],
     nextFollowRange: [],
@@ -686,6 +759,8 @@ onMounted(async () => {
   Object.assign(dicts, await api.dictsGrouped())
   products.value = await api.products()
   packages.value = await api.productPackages()
+  await loadAssignableUsers()
+  filters.includeUnassigned = canViewUnassigned.value
   await loadCustomers()
   await ensureSelection()
 })
@@ -696,6 +771,16 @@ watch(
     const customerId = Number(value)
     if (customerId) {
       await loadDetail(customerId)
+    }
+  },
+)
+
+watch(
+  () => filters.unassignedOnly,
+  (value) => {
+    if (value) {
+      filters.ownerId = undefined
+      filters.includeUnassigned = true
     }
   },
 )

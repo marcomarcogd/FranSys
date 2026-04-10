@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../store/auth'
+import { api } from '../api/fransys'
 import AdminLayout from '../layouts/AdminLayout.vue'
 import LoginView from '../views/LoginView.vue'
 import DashboardView from '../views/admin/DashboardView.vue'
@@ -39,6 +40,7 @@ const routes = [
           subtitle: '查看关键指标、待办客户和最近动态',
           icon: 'DataBoard',
           navGroup: 'workspace',
+          roles: ['ROLE_ADMIN', 'ROLE_SALES', 'ROLE_OPERATIONS'],
         },
       },
       {
@@ -50,6 +52,7 @@ const routes = [
           subtitle: '集中维护客户资料、跟进记录和推荐方案',
           icon: 'UserFilled',
           navGroup: 'workspace',
+          roles: ['ROLE_ADMIN', 'ROLE_SALES', 'ROLE_OPERATIONS'],
         },
       },
       { path: 'leads', redirect: '/admin/customers', meta: { hidden: true } },
@@ -68,6 +71,7 @@ const routes = [
           subtitle: '维护合作企业、联系人和品牌信息',
           icon: 'OfficeBuilding',
           navGroup: 'supply',
+          roles: ['ROLE_ADMIN', 'ROLE_SALES', 'ROLE_OPERATIONS'],
         },
       },
       {
@@ -79,6 +83,7 @@ const routes = [
           subtitle: '维护可推荐的单项产品和服务内容',
           icon: 'Goods',
           navGroup: 'supply',
+          roles: ['ROLE_ADMIN', 'ROLE_SALES', 'ROLE_OPERATIONS'],
         },
       },
       {
@@ -90,6 +95,7 @@ const routes = [
           subtitle: '组合跨企业产品，快速生成整套推荐方案',
           icon: 'Box',
           navGroup: 'supply',
+          roles: ['ROLE_ADMIN', 'ROLE_SALES', 'ROLE_OPERATIONS'],
         },
       },
       {
@@ -101,6 +107,7 @@ const routes = [
           subtitle: '维护系统下拉选项和基础枚举',
           icon: 'Collection',
           navGroup: 'system',
+          roles: ['ROLE_ADMIN'],
         },
       },
       {
@@ -112,6 +119,7 @@ const routes = [
           subtitle: '管理内部账号、角色和登录权限',
           icon: 'Setting',
           navGroup: 'system',
+          roles: ['ROLE_ADMIN'],
         },
       },
     ],
@@ -133,7 +141,19 @@ router.beforeEach(async (to) => {
   if (!isPublic && !authStore.token) {
     return '/login'
   }
+  if (!isPublic && authStore.token && !authStore.user) {
+    try {
+      authStore.setUser(await api.me())
+    } catch {
+      authStore.clearAuth()
+      return '/login'
+    }
+  }
   if (to.path === '/login' && authStore.token) {
+    return '/admin/dashboard'
+  }
+  const allowedRoles = to.meta?.roles as string[] | undefined
+  if (!isPublic && allowedRoles?.length && authStore.user && !allowedRoles.includes(authStore.user.roleCode)) {
     return '/admin/dashboard'
   }
   return true

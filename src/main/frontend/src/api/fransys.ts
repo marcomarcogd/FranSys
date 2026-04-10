@@ -29,6 +29,7 @@ export const api = {
     }))
   },
   systemMeta: () => wrap(http.get('/api/system/meta')),
+  assignableUsers: () => wrap(http.get('/api/system/assignable-users')),
   saveUser: (payload: any) => wrap(http.post('/api/system/users', payload)),
   leads: (params: any) => wrap(http.get('/api/leads', { params })),
   leadDetail: (id: number | string) => wrap(http.get(`/api/leads/${id}`)),

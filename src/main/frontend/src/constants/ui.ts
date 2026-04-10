@@ -54,6 +54,29 @@ export function recommendationTypeLabel(value?: string) {
   return value || '未设置'
 }
 
+export function accountLevelLabel(value?: string) {
+  if (value === 'LEADER') {
+    return '主管'
+  }
+  if (value === 'STAFF') {
+    return '成员'
+  }
+  return value || '未设置'
+}
+
+export function roleCodeLabel(value?: string) {
+  if (value === 'ROLE_ADMIN') {
+    return '管理员'
+  }
+  if (value === 'ROLE_SALES') {
+    return '销售'
+  }
+  if (value === 'ROLE_OPERATIONS') {
+    return '运营'
+  }
+  return value || '未设置'
+}
+
 export function isBlank(value: unknown) {
   return value === null || value === undefined || String(value).trim() === ''
 }

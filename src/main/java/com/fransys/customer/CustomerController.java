@@ -32,26 +32,36 @@ public class CustomerController {
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String sourceChannel,
             @RequestParam(required = false) String customerLevel,
+            @RequestParam(required = false) Long ownerId,
+            @RequestParam(required = false) Boolean includeUnassigned,
+            @RequestParam(required = false) Boolean unassignedOnly,
             @RequestParam(required = false) Boolean archived,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime lastFollowStart,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime lastFollowEnd,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime nextFollowStart,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime nextFollowEnd) {
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime nextFollowEnd,
+            @AuthenticationPrincipal SysUserDetails currentUser) {
         return ApiResponse.success(customerService.listCustomers(
                 keyword,
                 sourceChannel,
                 customerLevel,
+                ownerId,
+                includeUnassigned,
+                unassignedOnly,
                 archived,
                 lastFollowStart,
                 lastFollowEnd,
                 nextFollowStart,
-                nextFollowEnd));
+                nextFollowEnd,
+                currentUser));
     }
 
     @GetMapping("/{customerId}")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_SALES','ROLE_OPERATIONS')")
-    public ApiResponse<CustomerDtos.CustomerDetailResponse> detail(@PathVariable Long customerId) {
-        return ApiResponse.success(customerService.getCustomerDetail(customerId));
+    public ApiResponse<CustomerDtos.CustomerDetailResponse> detail(
+            @PathVariable Long customerId,
+            @AuthenticationPrincipal SysUserDetails currentUser) {
+        return ApiResponse.success(customerService.getCustomerDetail(customerId, currentUser));
     }
 
     @PostMapping
@@ -87,6 +97,7 @@ public class CustomerController {
                         request.budgetRange(),
                         request.entryDate(),
                         request.followUpAt(),
+                        request.ownerId(),
                         request.remark(),
                         request.archived()),
                 currentUser));

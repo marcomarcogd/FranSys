@@ -14,13 +14,17 @@ public class AuthDtos {
             Long userId,
             String username,
             String displayName,
-            String roleCode) {
+            String roleCode,
+            String accountLevel,
+            Long managerUserId) {
     }
 
     public record CurrentUserResponse(
             Long userId,
             String username,
             String displayName,
-            String roleCode) {
+            String roleCode,
+            String accountLevel,
+            Long managerUserId) {
     }
 }

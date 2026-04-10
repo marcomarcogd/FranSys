@@ -15,14 +15,26 @@ public class SysUserDetails implements UserDetails {
     private final String password;
     private final String displayName;
     private final String roleCode;
+    private final String accountLevel;
+    private final Long managerUserId;
     private final boolean enabled;
 
-    public SysUserDetails(Long userId, String username, String password, String displayName, String roleCode, boolean enabled) {
+    public SysUserDetails(
+            Long userId,
+            String username,
+            String password,
+            String displayName,
+            String roleCode,
+            String accountLevel,
+            Long managerUserId,
+            boolean enabled) {
         this.userId = userId;
         this.username = username;
         this.password = password;
         this.displayName = displayName;
         this.roleCode = roleCode;
+        this.accountLevel = accountLevel;
+        this.managerUserId = managerUserId;
         this.enabled = enabled;
     }
 

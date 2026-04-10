@@ -157,18 +157,26 @@ public class WorkflowDtos {
     public record DashboardStat(String label, long value) {
     }
 
+    public record DashboardRankingItem(
+            Long userId,
+            String displayName,
+            long count,
+            int rankNo) {
+    }
+
     public record DashboardOverviewResponse(
+            String scopeLabel,
             long totalCustomers,
-            long todayCustomers,
-            long aLevelCustomers,
-            long bLevelCustomers,
+            long weekNewCustomers,
             long dueFollowCount,
             long archivedCustomers,
             List<DashboardStat> sourceChannelStats,
             List<DashboardStat> customerLevelStats,
             List<DashboardStat> recommendationTypeStats,
             List<com.fransys.customer.CustomerDtos.CustomerListItem> dueFollowCustomers,
-            List<com.fransys.customer.CustomerDtos.CustomerListItem> recentCustomers) {
+            List<com.fransys.customer.CustomerDtos.CustomerListItem> recentCustomers,
+            List<DashboardRankingItem> customerOwnerRankings,
+            List<DashboardRankingItem> newCustomerRankings) {
     }
 
     public record GroupedDictResponse(Map<String, List<DictItem>> items) {
@@ -180,10 +188,27 @@ public class WorkflowDtos {
             String password,
             @NotBlank(message = "姓名不能为空") String displayName,
             @NotBlank(message = "角色不能为空") String roleCode,
+            @NotBlank(message = "账号等级不能为空") String accountLevel,
+            Long managerUserId,
             Boolean enabled) {
     }
 
-    public record UserSummary(Long id, String username, String displayName, String roleCode, Boolean enabled) {
+    public record UserSummary(
+            Long id,
+            String username,
+            String displayName,
+            String roleCode,
+            String accountLevel,
+            Long managerUserId,
+            String managerDisplayName,
+            Boolean enabled) {
+    }
+
+    public record UserOption(
+            Long id,
+            String displayName,
+            String roleCode,
+            String accountLevel) {
     }
 
     public record SystemMetaResponse(List<UserSummary> users, List<SysRole> roles, List<Enterprise> enterprises) {

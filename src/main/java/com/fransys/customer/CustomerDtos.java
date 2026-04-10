@@ -30,6 +30,7 @@ public class CustomerDtos {
             String budgetRange,
             LocalDate entryDate,
             LocalDateTime followUpAt,
+            Long ownerId,
             String remark,
             Boolean archived) {
     }
@@ -43,7 +44,9 @@ public class CustomerDtos {
             String contactPhone,
             String sourceChannel,
             String customerLevel,
+            Long ownerId,
             String ownerName,
+            String currentStatus,
             LocalDateTime lastFollowUpAt,
             LocalDateTime followUpAt,
             Boolean archived,

@@ -1,7 +1,7 @@
 <template>
   <div class="page-stack">
-    <div class="page-actions">
-      <el-button type="primary" @click="openDialog()">新增企业</el-button>
+    <div v-if="canEditSupply" class="page-actions">
+      <el-button v-if="canEditSupply" type="primary" @click="openDialog()">新增企业</el-button>
     </div>
     <el-card shadow="never" class="workspace-card">
       <template #header>
@@ -22,7 +22,7 @@
         <el-table-column prop="certificationStatus" label="认证状态" width="100" />
         <el-table-column prop="certificationLevel" label="认证等级" width="100" />
         <el-table-column prop="priceRange" label="价格区间" width="140" />
-        <el-table-column label="操作" width="100">
+        <el-table-column v-if="canEditSupply" label="操作" width="100">
           <template #default="{ row }">
             <el-button link type="primary" @click="openDialog(row)">编辑</el-button>
           </template>
@@ -59,11 +59,14 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { api } from '../../api/fransys'
 import { isBlank, isValidPhone } from '../../constants/ui'
+import { useAuthStore } from '../../store/auth'
 
+const authStore = useAuthStore()
+const canEditSupply = computed(() => authStore.user?.roleCode !== 'ROLE_SALES')
 const rows = ref<any[]>([])
 const dialogVisible = ref(false)
 const form = reactive<any>({})

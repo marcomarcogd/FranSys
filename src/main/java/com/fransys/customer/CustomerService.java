@@ -1,5 +1,6 @@
 package com.fransys.customer;
 
+import com.fransys.auth.DataPermissionService;
 import com.fransys.auth.SysUserDetails;
 import com.fransys.common.exception.BusinessException;
 import com.fransys.lead.CustomerLead;
@@ -10,13 +11,18 @@ import com.fransys.product.Product;
 import com.fransys.product.ProductPackage;
 import com.fransys.product.ProductPackageRepository;
 import com.fransys.product.ProductRepository;
+import com.fransys.system.SysUser;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.TemporalAdjusters;
 import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
@@ -34,18 +40,22 @@ public class CustomerService {
     private final ProductRepository productRepository;
     private final ProductPackageRepository productPackageRepository;
     private final OperationLogService operationLogService;
+    private final DataPermissionService dataPermissionService;
 
     public List<CustomerDtos.CustomerListItem> listCustomers(
             String keyword,
             String sourceChannel,
             String customerLevel,
+            Long ownerId,
+            Boolean includeUnassigned,
+            Boolean unassignedOnly,
             Boolean archived,
             LocalDateTime lastFollowStart,
             LocalDateTime lastFollowEnd,
             LocalDateTime nextFollowStart,
-            LocalDateTime nextFollowEnd) {
-        return customerLeadRepository.findAll()
-                .stream()
+            LocalDateTime nextFollowEnd,
+            SysUserDetails currentUser) {
+        return scopedCustomersForList(currentUser, ownerId, includeUnassigned, unassignedOnly).stream()
                 .filter(customer -> matchesKeyword(customer, keyword))
                 .filter(customer -> isBlank(sourceChannel) || Objects.equals(customer.getSourceChannel(), sourceChannel))
                 .filter(customer -> isBlank(customerLevel) || Objects.equals(customer.getCustomerLevel(), customerLevel))
@@ -57,8 +67,8 @@ public class CustomerService {
                 .toList();
     }
 
-    public CustomerDtos.CustomerDetailResponse getCustomerDetail(Long customerId) {
-        CustomerLead customer = getCustomer(customerId);
+    public CustomerDtos.CustomerDetailResponse getCustomerDetail(Long customerId, SysUserDetails currentUser) {
+        CustomerLead customer = getAccessibleCustomer(customerId, currentUser);
         List<CustomerFollowRecord> followRecords = customerFollowRecordRepository.findByLeadIdOrderByFollowAtDesc(customerId);
         List<CustomerDtos.RecommendationView> recommendations = customerRecommendationRepository.findByLeadIdOrderByCreatedAtDesc(customerId)
                 .stream()
@@ -71,7 +81,11 @@ public class CustomerService {
     public CustomerLead saveCustomer(CustomerDtos.CustomerUpsertRequest request, SysUserDetails currentUser) {
         CustomerLead customer = request.id() == null
                 ? new CustomerLead()
-                : getCustomer(request.id());
+                : getAccessibleCustomer(request.id(), currentUser);
+
+        Long originalOwnerId = customer.getOwnerId();
+        String originalOwnerName = customer.getOwnerName();
+        OwnerSelection ownerSelection = resolveOwner(request, customer, currentUser);
 
         if (customer.getLeadNo() == null) {
             customer.setLeadNo(generateNo("C"));
@@ -95,10 +109,23 @@ public class CustomerService {
         customer.setFollowUpAt(request.followUpAt());
         customer.setRemark(request.remark());
         customer.setArchived(request.archived() != null && request.archived());
-        customer.setOwnerId(currentUser.getUserId());
-        customer.setOwnerName(currentUser.getDisplayName());
+        customer.setOwnerId(ownerSelection.ownerId());
+        customer.setOwnerName(ownerSelection.ownerName());
         CustomerLead saved = customerLeadRepository.save(customer);
-        operationLogService.log("LEAD", saved.getId(), request.id() == null ? "CUSTOMER_CREATE" : "CUSTOMER_UPDATE", currentUser.getDisplayName(), "保存客户主档");
+
+        String detail = "保存客户主档";
+        if (!Objects.equals(originalOwnerId, saved.getOwnerId())) {
+            detail = "保存客户主档并调整负责人";
+        }
+        operationLogService.log("LEAD", saved.getId(), request.id() == null ? "CUSTOMER_CREATE" : "CUSTOMER_UPDATE", currentUser.getDisplayName(), detail);
+        if (!Objects.equals(originalOwnerId, saved.getOwnerId())) {
+            operationLogService.log(
+                    "LEAD",
+                    saved.getId(),
+                    "CUSTOMER_ASSIGN",
+                    currentUser.getDisplayName(),
+                    String.format("客户负责人由 %s 调整为 %s", defaultIfBlank(originalOwnerName, "未分配"), defaultIfBlank(saved.getOwnerName(), "未分配")));
+        }
         return saved;
     }
 
@@ -125,29 +152,31 @@ public class CustomerService {
         customer.setUrgency(request.urgency());
         customer.setBudgetRange(request.budgetRange());
         customer.setCustomerLevel("B");
-        customer.setCurrentStatus("待跟进");
+        customer.setCurrentStatus("待分配");
         customer.setArchived(false);
         customer.setRemark(request.remark());
+        customer.setOwnerId(null);
+        customer.setOwnerName(null);
         CustomerLead saved = customerLeadRepository.save(customer);
 
         CustomerFollowRecord followRecord = new CustomerFollowRecord();
         followRecord.setLeadId(saved.getId());
         followRecord.setFollowAt(LocalDateTime.now());
         followRecord.setContactMethod("PHONE");
-        followRecord.setCommunicationSummary("公开表单提交客户线索");
+        followRecord.setCommunicationSummary("公开表单提交需求登记");
         followRecord.setCustomerNeed(defaultIfBlank(request.initialNeedType(), "待补充"));
-        followRecord.setOurFeedback("系统已自动建档，待内部人员首次联系");
-        followRecord.setOwnerName("PUBLIC");
+        followRecord.setOurFeedback("已收到需求登记，待顾问分配");
+        followRecord.setOwnerName("SYSTEM");
         followRecord.setLevelAfter(saved.getCustomerLevel());
         customerFollowRecordRepository.save(followRecord);
 
-        operationLogService.log("LEAD", saved.getId(), "CREATE_PUBLIC", "PUBLIC", "公开表单创建客户并生成初始跟进");
+        operationLogService.log("LEAD", saved.getId(), "CREATE_PUBLIC", "PUBLIC", "公开表单创建客户并进入待分配");
         return saved;
     }
 
     @Transactional
     public CustomerFollowRecord addFollowRecord(Long customerId, CustomerDtos.FollowRecordRequest request, SysUserDetails currentUser) {
-        CustomerLead customer = getCustomer(customerId);
+        CustomerLead customer = getAccessibleCustomer(customerId, currentUser);
         CustomerFollowRecord record = new CustomerFollowRecord();
         record.setLeadId(customerId);
         record.setFollowAt(request.followAt() == null ? LocalDateTime.now() : request.followAt());
@@ -166,8 +195,6 @@ public class CustomerService {
         customer.setLastFollowUpAt(saved.getFollowAt());
         customer.setFollowUpAt(saved.getNextFollowUpAt());
         customer.setCustomerLevel(saved.getLevelAfter());
-        customer.setOwnerId(currentUser.getUserId());
-        customer.setOwnerName(currentUser.getDisplayName());
         customer.setCurrentStatus("跟进中");
         customerLeadRepository.save(customer);
 
@@ -177,7 +204,7 @@ public class CustomerService {
 
     @Transactional
     public CustomerDtos.RecommendationView addRecommendation(Long customerId, CustomerDtos.RecommendationRequest request, SysUserDetails currentUser) {
-        getCustomer(customerId);
+        getAccessibleCustomer(customerId, currentUser);
         CustomerRecommendation recommendation = new CustomerRecommendation();
         recommendation.setLeadId(customerId);
         recommendation.setRecommendationReason(request.recommendationReason());
@@ -201,36 +228,33 @@ public class CustomerService {
         return toRecommendationView(saved);
     }
 
-    public long totalCustomers() {
-        return customerLeadRepository.count();
+    public long totalCustomers(SysUserDetails currentUser) {
+        return scopedCustomers(currentUser).size();
     }
 
-    public long todayCustomers() {
-        return customerLeadRepository.countByEntryDate(LocalDate.now());
-    }
-
-    public long countByLevel(String level) {
-        return customerLeadRepository.findAll().stream()
-                .filter(customer -> Objects.equals(customer.getCustomerLevel(), level))
+    public long weekNewCustomers(SysUserDetails currentUser) {
+        LocalDate weekStart = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+        return scopedCustomers(currentUser).stream()
+                .filter(customer -> customer.getEntryDate() != null && !customer.getEntryDate().isBefore(weekStart))
                 .count();
     }
 
-    public long dueFollowCount() {
+    public long dueFollowCount(SysUserDetails currentUser) {
         LocalDateTime now = LocalDateTime.now();
-        return customerLeadRepository.findAll().stream()
+        return scopedCustomers(currentUser).stream()
                 .filter(customer -> !Boolean.TRUE.equals(customer.getArchived()))
                 .filter(customer -> customer.getFollowUpAt() != null && !customer.getFollowUpAt().isAfter(now))
                 .count();
     }
 
-    public long archivedCount() {
-        return customerLeadRepository.findAll().stream()
+    public long archivedCount(SysUserDetails currentUser) {
+        return scopedCustomers(currentUser).stream()
                 .filter(customer -> Boolean.TRUE.equals(customer.getArchived()))
                 .count();
     }
 
-    public List<CustomerDtos.CustomerListItem> dueFollowCustomers() {
-        return customerLeadRepository.findAll().stream()
+    public List<CustomerDtos.CustomerListItem> dueFollowCustomers(SysUserDetails currentUser) {
+        return scopedCustomers(currentUser).stream()
                 .filter(customer -> !Boolean.TRUE.equals(customer.getArchived()))
                 .filter(customer -> customer.getFollowUpAt() != null)
                 .sorted(
@@ -241,15 +265,16 @@ public class CustomerService {
                 .toList();
     }
 
-    public List<CustomerDtos.CustomerListItem> recentCustomers() {
-        return customerLeadRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt")).stream()
+    public List<CustomerDtos.CustomerListItem> recentCustomers(SysUserDetails currentUser) {
+        return scopedCustomers(currentUser).stream()
+                .sorted(Comparator.comparing(CustomerLead::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder())))
                 .limit(5)
                 .map(this::toListItem)
                 .toList();
     }
 
-    public List<com.fransys.workflow.WorkflowDtos.DashboardStat> sourceChannelStats() {
-        return customerLeadRepository.findAll().stream()
+    public List<com.fransys.workflow.WorkflowDtos.DashboardStat> sourceChannelStats(SysUserDetails currentUser) {
+        return scopedCustomers(currentUser).stream()
                 .collect(Collectors.groupingBy(customer -> defaultIfBlank(customer.getSourceChannel(), "未填写"), Collectors.counting()))
                 .entrySet().stream()
                 .sorted(Map.Entry.comparingByKey())
@@ -257,8 +282,8 @@ public class CustomerService {
                 .toList();
     }
 
-    public List<com.fransys.workflow.WorkflowDtos.DashboardStat> customerLevelStats() {
-        return customerLeadRepository.findAll().stream()
+    public List<com.fransys.workflow.WorkflowDtos.DashboardStat> customerLevelStats(SysUserDetails currentUser) {
+        return scopedCustomers(currentUser).stream()
                 .collect(Collectors.groupingBy(customer -> defaultIfBlank(customer.getCustomerLevel(), "未分级"), Collectors.counting()))
                 .entrySet().stream()
                 .sorted(Map.Entry.comparingByKey())
@@ -266,12 +291,57 @@ public class CustomerService {
                 .toList();
     }
 
-    public List<com.fransys.workflow.WorkflowDtos.DashboardStat> recommendationTypeStats() {
+    public List<com.fransys.workflow.WorkflowDtos.DashboardStat> recommendationTypeStats(SysUserDetails currentUser) {
+        Set<Long> accessibleLeadIds = scopedCustomers(currentUser).stream()
+                .map(CustomerLead::getId)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        Set<Long> accessibleRecommendationIds = customerRecommendationRepository.findAll().stream()
+                .filter(recommendation -> accessibleLeadIds.contains(recommendation.getLeadId()))
+                .map(CustomerRecommendation::getId)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
         return customerRecommendationItemRepository.findAll().stream()
+                .filter(item -> accessibleRecommendationIds.contains(item.getRecommendationId()))
                 .collect(Collectors.groupingBy(CustomerRecommendationItem::getItemType, Collectors.counting()))
                 .entrySet().stream()
                 .sorted(Map.Entry.comparingByKey())
                 .map(entry -> new com.fransys.workflow.WorkflowDtos.DashboardStat(entry.getKey(), entry.getValue()))
+                .toList();
+    }
+
+    public List<com.fransys.workflow.WorkflowDtos.DashboardRankingItem> customerOwnerRankings() {
+        return buildRanking(
+                customerLeadRepository.findAll().stream()
+                        .filter(customer -> customer.getOwnerId() != null)
+                        .filter(customer -> !Boolean.TRUE.equals(customer.getArchived()))
+                        .collect(Collectors.groupingBy(CustomerLead::getOwnerId, Collectors.counting())),
+                customerLeadRepository.findAll().stream()
+                        .filter(customer -> customer.getOwnerId() != null)
+                        .collect(Collectors.toMap(CustomerLead::getOwnerId, CustomerLead::getOwnerName, (left, right) -> left)));
+    }
+
+    public List<com.fransys.workflow.WorkflowDtos.DashboardRankingItem> newCustomerRankings() {
+        LocalDate monthStart = LocalDate.now().withDayOfMonth(1);
+        return buildRanking(
+                customerLeadRepository.findAll().stream()
+                        .filter(customer -> customer.getOwnerId() != null)
+                        .filter(customer -> customer.getEntryDate() != null && !customer.getEntryDate().isBefore(monthStart))
+                        .collect(Collectors.groupingBy(CustomerLead::getOwnerId, Collectors.counting())),
+                customerLeadRepository.findAll().stream()
+                        .filter(customer -> customer.getOwnerId() != null)
+                        .collect(Collectors.toMap(CustomerLead::getOwnerId, CustomerLead::getOwnerName, (left, right) -> left)));
+    }
+
+    private List<com.fransys.workflow.WorkflowDtos.DashboardRankingItem> buildRanking(Map<Long, Long> counts, Map<Long, String> ownerNames) {
+        List<Map.Entry<Long, Long>> sortedEntries = counts.entrySet().stream()
+                .sorted(Map.Entry.<Long, Long>comparingByValue().reversed().thenComparing(Map.Entry.comparingByKey()))
+                .limit(10)
+                .toList();
+        return sortedEntries.stream()
+                .map(entry -> new com.fransys.workflow.WorkflowDtos.DashboardRankingItem(
+                        entry.getKey(),
+                        defaultIfBlank(ownerNames.get(entry.getKey()), "未知账号"),
+                        entry.getValue(),
+                        sortedEntries.indexOf(entry) + 1))
                 .toList();
     }
 
@@ -322,8 +392,72 @@ public class CustomerService {
         throw new BusinessException("不支持的推荐类型");
     }
 
-    private CustomerLead getCustomer(Long customerId) {
-        return customerLeadRepository.findById(customerId).orElseThrow(() -> new BusinessException("客户不存在"));
+    private CustomerLead getAccessibleCustomer(Long customerId, SysUserDetails currentUser) {
+        CustomerLead customer = customerLeadRepository.findById(customerId)
+                .orElseThrow(() -> new BusinessException("客户不存在"));
+        dataPermissionService.assertCustomerAccessible(customer, currentUser);
+        return customer;
+    }
+
+    private List<CustomerLead> scopedCustomers(SysUserDetails currentUser) {
+        Set<Long> accessibleUserIds = dataPermissionService.accessibleUserIds(currentUser);
+        boolean includeUnassigned = dataPermissionService.canViewUnassigned(currentUser);
+        return customerLeadRepository.findAll().stream()
+                .filter(customer -> isAccessibleCustomer(customer, accessibleUserIds, includeUnassigned))
+                .toList();
+    }
+
+    private List<CustomerLead> scopedCustomersForList(
+            SysUserDetails currentUser,
+            Long ownerId,
+            Boolean includeUnassigned,
+            Boolean unassignedOnly) {
+        Set<Long> accessibleUserIds = dataPermissionService.accessibleUserIds(currentUser);
+        boolean allowUnassigned = dataPermissionService.canViewUnassigned(currentUser);
+        boolean showUnassigned = allowUnassigned && !Boolean.FALSE.equals(includeUnassigned);
+        return customerLeadRepository.findAll().stream()
+                .filter(customer -> isAccessibleCustomer(customer, accessibleUserIds, allowUnassigned))
+                .filter(customer -> {
+                    if (Boolean.TRUE.equals(unassignedOnly)) {
+                        return allowUnassigned && customer.getOwnerId() == null;
+                    }
+                    if (ownerId != null) {
+                        return Objects.equals(customer.getOwnerId(), ownerId);
+                    }
+                    if (customer.getOwnerId() == null) {
+                        return showUnassigned;
+                    }
+                    return true;
+                })
+                .toList();
+    }
+
+    private boolean isAccessibleCustomer(CustomerLead customer, Set<Long> accessibleUserIds, boolean includeUnassigned) {
+        if (customer.getOwnerId() == null) {
+            return includeUnassigned;
+        }
+        return accessibleUserIds.contains(customer.getOwnerId());
+    }
+
+    private OwnerSelection resolveOwner(CustomerDtos.CustomerUpsertRequest request, CustomerLead customer, SysUserDetails currentUser) {
+        if (request.id() == null) {
+            if (request.ownerId() != null && dataPermissionService.canManageOwnership(currentUser)) {
+                SysUser owner = dataPermissionService.requireAssignableOwner(request.ownerId(), currentUser);
+                return new OwnerSelection(owner.getId(), owner.getDisplayName());
+            }
+            return new OwnerSelection(currentUser.getUserId(), currentUser.getDisplayName());
+        }
+        if (request.ownerId() == null) {
+            return new OwnerSelection(customer.getOwnerId(), customer.getOwnerName());
+        }
+        if (!dataPermissionService.canManageOwnership(currentUser) && !Objects.equals(request.ownerId(), customer.getOwnerId())) {
+            throw new BusinessException("无权修改客户负责人");
+        }
+        if (Objects.equals(request.ownerId(), customer.getOwnerId())) {
+            return new OwnerSelection(customer.getOwnerId(), customer.getOwnerName());
+        }
+        SysUser owner = dataPermissionService.requireAssignableOwner(request.ownerId(), currentUser);
+        return new OwnerSelection(owner.getId(), owner.getDisplayName());
     }
 
     private CustomerDtos.CustomerListItem toListItem(CustomerLead customer) {
@@ -336,7 +470,9 @@ public class CustomerService {
                 customer.getContactPhone(),
                 customer.getSourceChannel(),
                 customer.getCustomerLevel(),
+                customer.getOwnerId(),
                 customer.getOwnerName(),
+                customer.getCurrentStatus(),
                 customer.getLastFollowUpAt(),
                 customer.getFollowUpAt(),
                 customer.getArchived(),
@@ -411,5 +547,8 @@ public class CustomerService {
 
     private String defaultIfBlank(String value, String defaultValue) {
         return isBlank(value) ? defaultValue : value;
+    }
+
+    private record OwnerSelection(Long ownerId, String ownerName) {
     }
 }

@@ -1,5 +1,6 @@
 package com.fransys.workflow;
 
+import com.fransys.auth.SysUserDetails;
 import com.fransys.common.api.ApiResponse;
 import com.fransys.dict.DictItem;
 import com.fransys.enterprise.Enterprise;
@@ -7,6 +8,7 @@ import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -54,6 +56,12 @@ public class SystemDataController {
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ApiResponse<WorkflowDtos.SystemMetaResponse> systemMeta() {
         return ApiResponse.success(systemDataService.systemMeta());
+    }
+
+    @GetMapping("/api/system/assignable-users")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_SALES','ROLE_OPERATIONS')")
+    public ApiResponse<List<WorkflowDtos.UserOption>> assignableUsers(@AuthenticationPrincipal SysUserDetails currentUser) {
+        return ApiResponse.success(systemDataService.assignableUsers(currentUser));
     }
 
     @PostMapping("/api/system/users")

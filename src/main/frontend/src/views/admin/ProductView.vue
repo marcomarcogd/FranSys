@@ -1,7 +1,7 @@
 <template>
   <div class="page-stack">
-    <div class="page-actions">
-      <el-button type="primary" @click="openDialog()">新增产品</el-button>
+    <div v-if="canEditSupply" class="page-actions">
+      <el-button v-if="canEditSupply" type="primary" @click="openDialog()">新增产品</el-button>
     </div>
 
     <el-card shadow="never" class="filter-card">
@@ -54,7 +54,7 @@
             <el-tag :type="row.active ? 'success' : 'info'">{{ row.active ? '启用' : '停用' }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="100" fixed="right">
+        <el-table-column v-if="canEditSupply" label="操作" width="100" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" @click="openDialog(row)">编辑</el-button>
           </template>
@@ -100,11 +100,14 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { api } from '../../api/fransys'
 import { isBlank } from '../../constants/ui'
+import { useAuthStore } from '../../store/auth'
 
+const authStore = useAuthStore()
+const canEditSupply = computed(() => authStore.user?.roleCode !== 'ROLE_SALES')
 const rows = ref<any[]>([])
 const enterprises = ref<any[]>([])
 const dialogVisible = ref(false)

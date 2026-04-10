@@ -10,7 +10,7 @@
           <div class="section-toolbar">
             <div class="section-title-group">
               <div class="section-title">账号列表</div>
-              <div class="section-subtitle">管理可登录后台的内部账号</div>
+              <div class="section-subtitle">配置角色、账号等级和直属上级</div>
             </div>
             <el-tag type="info">{{ (meta.users || []).length }} 个</el-tag>
           </div>
@@ -18,7 +18,15 @@
         <el-table :data="meta.users || []" border empty-text="当前还没有内部账号">
           <el-table-column prop="username" label="用户名" width="120" />
           <el-table-column prop="displayName" label="姓名" width="120" />
-          <el-table-column prop="roleCode" label="角色" />
+          <el-table-column label="角色" width="110">
+            <template #default="{ row }">{{ roleCodeLabel(row.roleCode) }}</template>
+          </el-table-column>
+          <el-table-column label="等级" width="90">
+            <template #default="{ row }">{{ accountLevelLabel(row.accountLevel) }}</template>
+          </el-table-column>
+          <el-table-column prop="managerDisplayName" label="直属上级" width="120">
+            <template #default="{ row }">{{ row.managerDisplayName || '无' }}</template>
+          </el-table-column>
           <el-table-column prop="enabled" label="启用" width="80">
             <template #default="{ row }">{{ row.enabled ? '是' : '否' }}</template>
           </el-table-column>
@@ -34,12 +42,12 @@
         <template #header>
           <div class="section-title-group">
             <div class="section-title">角色说明</div>
-            <div class="section-subtitle">帮助确认不同账号的职责边界</div>
+            <div class="section-subtitle">角色决定功能权限，账号等级决定数据范围</div>
           </div>
         </template>
         <el-empty v-if="!(meta.roles || []).length" description="暂无角色信息" />
         <el-timeline v-else>
-          <el-timeline-item v-for="role in meta.roles || []" :key="role.id" :timestamp="role.roleCode">
+          <el-timeline-item v-for="role in meta.roles || []" :key="role.id" :timestamp="roleCodeLabel(role.roleCode)">
             <div class="role-name">{{ role.roleName }}</div>
             <div class="muted-text">{{ role.description }}</div>
           </el-timeline-item>
@@ -47,13 +55,29 @@
       </el-card>
     </div>
 
-    <el-dialog v-model="dialogVisible" title="用户信息" width="560px">
+    <el-dialog v-model="dialogVisible" :title="form.id ? '编辑用户' : '新增用户'" width="620px">
       <el-form :model="form" label-width="110px">
         <el-form-item label="用户名"><el-input v-model="form.username" placeholder="请输入登录用户名" clearable /></el-form-item>
         <el-form-item label="姓名"><el-input v-model="form.displayName" placeholder="请输入用户姓名" clearable /></el-form-item>
         <el-form-item label="角色">
           <el-select v-model="form.roleCode" style="width: 100%" placeholder="请选择">
             <el-option v-for="role in meta.roles || []" :key="role.id" :label="role.roleName" :value="role.roleCode" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="账号等级">
+          <el-select v-model="form.accountLevel" style="width: 100%" placeholder="请选择">
+            <el-option label="成员" value="STAFF" />
+            <el-option label="主管" value="LEADER" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="直属上级">
+          <el-select v-model="form.managerUserId" clearable style="width: 100%" placeholder="请选择">
+            <el-option
+              v-for="user in managerOptions"
+              :key="user.id"
+              :label="`${user.displayName} · ${accountLevelLabel(user.accountLevel)}`"
+              :value="user.id"
+            />
           </el-select>
         </el-form-item>
         <el-form-item label="密码">
@@ -73,22 +97,42 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { api } from '../../api/fransys'
-import { isBlank } from '../../constants/ui'
+import { accountLevelLabel, isBlank, roleCodeLabel } from '../../constants/ui'
 
 const meta = reactive<any>({})
 const dialogVisible = ref(false)
 const form = reactive<any>({})
 
+const managerOptions = computed(() =>
+  (meta.users || []).filter((item: any) => {
+    if (form.id && item.id === form.id) {
+      return false
+    }
+    return item.roleCode === 'ROLE_ADMIN' || item.accountLevel === 'LEADER'
+  }),
+)
+
 function resetForm() {
-  Object.assign(form, { id: undefined, username: '', displayName: '', roleCode: '', password: '', enabled: true })
+  Object.assign(form, {
+    id: undefined,
+    username: '',
+    displayName: '',
+    roleCode: '',
+    accountLevel: 'STAFF',
+    managerUserId: undefined,
+    password: '',
+    enabled: true,
+  })
 }
 
 function openDialog(row?: any) {
   resetForm()
-  if (row) Object.assign(form, row, { password: '' })
+  if (row) {
+    Object.assign(form, row, { password: '' })
+  }
   dialogVisible.value = true
 }
 
@@ -109,9 +153,16 @@ async function save() {
     ElMessage.warning('请选择角色')
     return
   }
+  if (isBlank(form.accountLevel)) {
+    ElMessage.warning('请选择账号等级')
+    return
+  }
   if (!form.id && isBlank(form.password)) {
     ElMessage.warning('新建用户时必须设置密码')
     return
+  }
+  if (form.roleCode === 'ROLE_ADMIN') {
+    form.managerUserId = undefined
   }
   await api.saveUser(form)
   ElMessage.success('用户已保存')

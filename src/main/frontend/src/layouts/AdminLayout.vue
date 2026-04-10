@@ -74,6 +74,10 @@ const menuRoutes = computed(() => {
     if (!item.meta?.title) {
       return false
     }
+    const allowedRoles = item.meta?.roles as string[] | undefined
+    if (allowedRoles?.length && authStore.user && !allowedRoles.includes(authStore.user.roleCode)) {
+      return false
+    }
     return !item.redirect
   })
 })

@@ -28,7 +28,9 @@ public class AuthService {
                 userDetails.getUserId(),
                 userDetails.getUsername(),
                 userDetails.getDisplayName(),
-                userDetails.getRoleCode());
+                userDetails.getRoleCode(),
+                userDetails.getAccountLevel(),
+                userDetails.getManagerUserId());
     }
 
     public AuthDtos.CurrentUserResponse me(SysUserDetails userDetails) {
@@ -39,6 +41,8 @@ public class AuthService {
                 userDetails.getUserId(),
                 userDetails.getUsername(),
                 userDetails.getDisplayName(),
-                userDetails.getRoleCode());
+                userDetails.getRoleCode(),
+                userDetails.getAccountLevel(),
+                userDetails.getManagerUserId());
     }
 }
