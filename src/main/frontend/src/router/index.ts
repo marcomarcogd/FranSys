@@ -10,21 +10,11 @@ import ProductView from '../views/admin/ProductView.vue'
 import PackageView from '../views/admin/PackageView.vue'
 import DictView from '../views/admin/DictView.vue'
 import SystemView from '../views/admin/SystemView.vue'
-import PublicLeadView from '../views/public/PublicLeadView.vue'
-import PublicFeedbackView from '../views/public/PublicFeedbackView.vue'
 
 const routes = [
   {
     path: '/login',
     component: LoginView,
-  },
-  {
-    path: '/public/lead',
-    component: PublicLeadView,
-  },
-  {
-    path: '/public/feedback/:token',
-    component: PublicFeedbackView,
   },
   {
     path: '/admin',
@@ -137,7 +127,7 @@ const router = createRouter({
 
 router.beforeEach(async (to) => {
   const authStore = useAuthStore()
-  const isPublic = to.path.startsWith('/public') || to.path === '/login'
+  const isPublic = to.path === '/login'
   if (!isPublic && !authStore.token) {
     return '/login'
   }

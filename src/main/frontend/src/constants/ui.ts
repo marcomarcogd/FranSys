@@ -3,25 +3,37 @@ export const customerLevelOptions = [
     value: 'A',
     shortLabel: 'A级',
     meaning: '高意向',
+    criteria: '已报价 / 方案审核中 / 近期有明确采购计划',
+    followFrequency: '每 3 天 1 次',
     followAdvice: '建议每 3 天跟进 1 次',
+    tagType: 'danger',
   },
   {
     value: 'B',
     shortLabel: 'B级',
     meaning: '潜力',
+    criteria: '需求匹配但未报价 / 正在对比竞品',
+    followFrequency: '每周 1 次',
     followAdvice: '建议每周跟进 1 次',
+    tagType: 'warning',
   },
   {
     value: 'C',
     shortLabel: 'C级',
     meaning: '普通',
+    criteria: '仅留资未互动 / 行业相关但无迫切需求',
+    followFrequency: '每 2 周 1 次',
     followAdvice: '建议每 2 周跟进 1 次',
+    tagType: 'info',
   },
   {
     value: 'D',
     shortLabel: 'D级',
     meaning: '沉默',
+    criteria: '超 3 个月无响应 / 联系方式无效',
+    followFrequency: '季度触达或归档',
     followAdvice: '建议季度触达或归档',
+    tagType: '',
   },
 ]
 
@@ -55,16 +67,20 @@ export function customerLevelLabel(value?: string) {
 
 export function customerLevelOptionLabel(value?: string) {
   const option = customerLevelOptions.find((item) => item.value === value)
-  return option ? `${option.shortLabel}${option.meaning}，${option.followAdvice}` : value || '未分级'
+  return option ? `${option.shortLabel}${option.meaning}` : value || '未分级'
 }
 
 export function customerLevelShortLabel(value?: string) {
   return customerLevelOptions.find((item) => item.value === value)?.shortLabel || value || '未分级'
 }
 
+export function customerLevelRule(value?: string) {
+  return customerLevelOptions.find((item) => item.value === value)
+}
+
 export function customerLevelHint(value?: string) {
   const option = customerLevelOptions.find((item) => item.value === value)
-  return option ? `${option.shortLabel}${option.meaning}，${option.followAdvice}` : '请先设置意向等级并安排后续跟进'
+  return option ? `${option.shortLabel}${option.meaning} · ${option.criteria} · ${option.followAdvice}` : '请先设置意向等级并安排后续跟进'
 }
 
 export function customerValueLevelLabel(value?: string) {

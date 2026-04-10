@@ -167,7 +167,7 @@
               <el-descriptions-item label="邮箱">{{ detail.customer.email || '未填写' }}</el-descriptions-item>
               <el-descriptions-item label="微信">{{ detail.customer.wechatNo || '未填写' }}</el-descriptions-item>
               <el-descriptions-item label="价值等级">{{ customerValueLevelLabel(detail.customer.customerValueLevel) }}</el-descriptions-item>
-              <el-descriptions-item label="地区">{{ detail.customer.region || detail.customer.cityArea || '未填写' }}</el-descriptions-item>
+              <el-descriptions-item label="地区">{{ detail.customer.region || '未填写' }}</el-descriptions-item>
               <el-descriptions-item label="来源渠道">{{ detail.customer.sourceChannel || '未填写' }}</el-descriptions-item>
               <el-descriptions-item label="当前需求">{{ detail.customer.initialNeedType || '未填写' }}</el-descriptions-item>
               <el-descriptions-item label="服务偏好">{{ detail.customer.servicePreference || '未填写' }}</el-descriptions-item>
@@ -176,6 +176,34 @@
               <el-descriptions-item label="下次跟进">{{ detail.customer.followUpAt || '未安排' }}</el-descriptions-item>
               <el-descriptions-item label="备注">{{ detail.customer.remark || '暂无补充说明' }}</el-descriptions-item>
             </el-descriptions>
+
+            <div class="intent-reference-block">
+              <div class="section-toolbar compact-toolbar">
+                <div class="section-title-group">
+                  <div class="section-title">意向等级判断依据</div>
+                  <div class="section-subtitle">当前客户的分级标准与建议跟进频率</div>
+                </div>
+                <el-button text @click="intentGuideExpanded = !intentGuideExpanded">
+                  {{ intentGuideExpanded ? '收起标准' : '查看完整标准' }}
+                </el-button>
+              </div>
+
+              <div v-if="selectedIntentRule" class="intent-reference-summary">
+                <div class="intent-reference-topline">
+                  <el-tag :type="selectedIntentRule.tagType || 'info'" effect="light">
+                    {{ `${selectedIntentRule.shortLabel}${selectedIntentRule.meaning}` }}
+                  </el-tag>
+                  <span>{{ selectedIntentRule.followFrequency }}</span>
+                </div>
+                <div class="intent-reference-criteria">{{ selectedIntentRule.criteria }}</div>
+                <div class="section-subtitle">建议动作：{{ selectedIntentRule.followAdvice }}</div>
+              </div>
+
+              <CustomerIntentLevelGuide
+                v-if="intentGuideExpanded"
+                :selected-level="detail.customer.customerLevel"
+              />
+            </div>
           </el-card>
 
           <div class="two-column customer-panels">
@@ -291,17 +319,17 @@
           </el-select>
         </el-form-item>
         <el-form-item label="意向等级">
-          <div style="width: 100%">
-            <el-select v-model="customerForm.customerLevel" style="width: 100%" placeholder="请选择">
-              <el-option v-for="item in intentLevelOptions" :key="item.value" :label="item.optionLabel" :value="item.value" />
-            </el-select>
-            <div class="field-help">{{ customerLevelHint(customerForm.customerLevel) }}</div>
-          </div>
+          <el-select v-model="customerForm.customerLevel" style="width: 100%" placeholder="请选择">
+            <el-option v-for="item in intentLevelOptions" :key="item.value" :label="item.optionLabel" :value="item.value" />
+          </el-select>
         </el-form-item>
         <el-form-item label="价值等级">
           <el-select v-model="customerForm.customerValueLevel" style="width: 100%" placeholder="请选择">
             <el-option v-for="item in valueLevelOptions" :key="item.value" :label="item.optionLabel" :value="item.value" />
           </el-select>
+        </el-form-item>
+        <el-form-item label="判断依据" class="form-item-full">
+          <CustomerIntentLevelGuide :selected-level="customerForm.customerLevel" />
         </el-form-item>
         <el-form-item v-if="canManageOwnership" label="负责人">
           <el-select v-model="customerForm.ownerId" clearable filterable style="width: 100%" placeholder="请选择负责人">
@@ -360,12 +388,12 @@
           <el-date-picker v-model="followForm.nextFollowUpAt" type="datetime" value-format="YYYY-MM-DDTHH:mm:ss" style="width: 100%" placeholder="请选择时间" />
         </el-form-item>
         <el-form-item label="更新意向等级">
-          <div style="width: 100%">
-            <el-select v-model="followForm.customerLevel" style="width: 100%" placeholder="请选择">
-              <el-option v-for="item in intentLevelOptions" :key="item.value" :label="item.optionLabel" :value="item.value" />
-            </el-select>
-            <div class="field-help">{{ customerLevelHint(followForm.customerLevel) }}</div>
-          </div>
+          <el-select v-model="followForm.customerLevel" style="width: 100%" placeholder="请选择">
+            <el-option v-for="item in intentLevelOptions" :key="item.value" :label="item.optionLabel" :value="item.value" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="判断依据" class="form-item-full">
+          <CustomerIntentLevelGuide :selected-level="followForm.customerLevel" />
         </el-form-item>
       </el-form>
       <el-form :model="followForm" label-width="110px">
@@ -431,11 +459,12 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { api } from '../../api/fransys'
 import { useAuthStore } from '../../store/auth'
+import CustomerIntentLevelGuide from '../../components/CustomerIntentLevelGuide.vue'
 import {
-  customerLevelHint,
   customerLevelLabel,
   customerLevelOptionLabel,
   customerLevelOptions,
+  customerLevelRule,
   customerLevelShortLabel,
   customerValueLevelLabel,
   customerValueLevelOptionLabel,
@@ -456,6 +485,7 @@ const customers = ref<any[]>([])
 const detail = reactive<any>({ customer: null, followRecords: [], recommendations: [], followFrequencyHint: '' })
 const selectedCustomerId = ref<number | null>(null)
 const assignableUsers = ref<any[]>([])
+const intentGuideExpanded = ref(false)
 
 const customerDialogVisible = ref(false)
 const followDialogVisible = ref(false)
@@ -495,6 +525,7 @@ const valueLevelOptions = customerValueLevelOptions.map((item) => ({
   ...item,
   optionLabel: customerValueLevelOptionLabel(item.value),
 }))
+const selectedIntentRule = computed(() => customerLevelRule(detail.customer?.customerLevel))
 
 const contactMethods = [
   { label: '电话', value: 'PHONE' },
@@ -607,6 +638,7 @@ async function loadDetail(customerId: number | null) {
   if (!customerId) {
     return
   }
+  intentGuideExpanded.value = false
   selectedCustomerId.value = customerId
   Object.assign(detail, await api.customerDetail(customerId))
 }

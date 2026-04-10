@@ -43,8 +43,8 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/", "/login", "/index.html", "/favicon.ico", "/favicon.svg", "/assets/**", "/uploads/**").permitAll()
-                        .requestMatchers("/admin/**", "/public/**").permitAll()
-                        .requestMatchers("/api/auth/login", "/api/public/**").permitAll()
+                        .requestMatchers("/admin/**").permitAll()
+                        .requestMatchers("/api/auth/login").permitAll()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex

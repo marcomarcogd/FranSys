@@ -1,12 +1,6 @@
 # FranSys
 
-FranSys 是一个基于 Spring Boot + Vue 3 + Element Plus 的一体化单体系统，用于把加盟前期的 5 张 SOP 表电子化，并串成一条客户主线流程：
-
-- 客户识别与分级
-- 需求评估
-- 企业匹配与推荐
-- 交付监督与回访
-- 售后复购跟进
+FranSys 是一个基于 Spring Boot + Vue 3 + Element Plus 的一体化单体系统，当前聚焦内部 CRM 与供给协同，覆盖客户管理、跟进记录、产品推荐、企业库、产品库、套餐方案、账号权限和仪表盘。
 
 ## 技术栈
 
@@ -18,6 +12,7 @@ FranSys 是一个基于 Spring Boot + Vue 3 + Element Plus 的一体化单体系
 ## 默认账号
 
 - 管理员：`admin / Admin@123`
+- 销售主管：`sales_leader / Leader@123`
 - 销售：`sales / Sales@123`
 - 运营：`ops / Ops@123`
 
@@ -29,7 +24,7 @@ FranSys 是一个基于 Spring Boot + Vue 3 + Element Plus 的一体化单体系
    - `DB_PORT=3306`
    - `DB_NAME=fransys`
    - `DB_USERNAME=root`
-   - `DB_PASSWORD=root`
+   - `DB_PASSWORD=123456`
    - `JWT_SECRET=FranSysJwtSecretFranSysJwtSecret2026`
 3. 启动应用：
 
@@ -39,7 +34,6 @@ mvn spring-boot:run
 
 4. 访问地址：
    - 管理端登录页：`http://localhost:8080/login`
-   - 客户公开线索表：`http://localhost:8080/public/lead`
 
 ## 打包
 
@@ -51,10 +45,9 @@ mvn package
 
 - `target/fransys-0.0.1-SNAPSHOT.jar`
 
-## 测试
+## 校验
 
 ```powershell
-mvn "-Dspring.profiles.active=test" test
+npm run build
+mvn -DskipTests package
 ```
-
-测试使用 H2 内存数据库，覆盖登录、公开线索提交、交付保存、回访令牌生成和外部回访提交流程。

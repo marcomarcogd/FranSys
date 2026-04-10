@@ -5,7 +5,6 @@ import com.fransys.auth.SysUserDetails;
 import com.fransys.common.exception.BusinessException;
 import com.fransys.lead.CustomerLead;
 import com.fransys.lead.CustomerLeadRepository;
-import com.fransys.lead.LeadDtos;
 import com.fransys.operation.OperationLogService;
 import com.fransys.product.Product;
 import com.fransys.product.ProductPackage;
@@ -25,7 +24,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -100,7 +98,6 @@ public class CustomerService {
         customer.setEmail(request.email());
         customer.setWechatNo(request.wechatNo());
         customer.setRegion(request.region());
-        customer.setCityArea(request.region());
         customer.setSourceChannel(request.sourceChannel());
         customer.setCustomerLevel(defaultIfBlank(request.customerLevel(), customer.getCustomerLevel()));
         customer.setCustomerValueLevel(defaultIfBlank(request.customerValueLevel(), customer.getCustomerValueLevel()));
@@ -129,52 +126,6 @@ public class CustomerService {
                     currentUser.getDisplayName(),
                     String.format("客户负责人由 %s 调整为 %s", defaultIfBlank(originalOwnerName, "未分配"), defaultIfBlank(saved.getOwnerName(), "未分配")));
         }
-        return saved;
-    }
-
-    @Transactional
-    public CustomerLead createPublicCustomer(LeadDtos.PublicLeadRequest request) {
-        CustomerLead customer = new CustomerLead();
-        customer.setLeadNo(generateNo("C"));
-        customer.setEntryDate(LocalDate.now());
-        customer.setCustomerName(request.customerName());
-        customer.setContactPhone(request.contactPhone());
-        customer.setGender(request.gender());
-        customer.setAge(request.age());
-        customer.setEmail(request.email());
-        customer.setWechatNo(request.wechatNo());
-        customer.setRegion(defaultIfBlank(request.region(), request.cityArea()));
-        customer.setCityArea(defaultIfBlank(request.cityArea(), request.region()));
-        customer.setAgeRange(request.ageRange());
-        customer.setFamilyStructure(request.familyStructure());
-        customer.setSourceChannel(defaultIfBlank(request.sourceChannel(), "自然咨询"));
-        customer.setReferrerName(request.referrerName());
-        customer.setServiceObject(request.serviceObject());
-        customer.setInitialNeedType(request.initialNeedType());
-        customer.setServicePreference(request.servicePreference());
-        customer.setUrgency(request.urgency());
-        customer.setBudgetRange(request.budgetRange());
-        customer.setCustomerLevel("B");
-        customer.setCustomerValueLevel("C");
-        customer.setCurrentStatus("待分配");
-        customer.setArchived(false);
-        customer.setRemark(request.remark());
-        customer.setOwnerId(null);
-        customer.setOwnerName(null);
-        CustomerLead saved = customerLeadRepository.save(customer);
-
-        CustomerFollowRecord followRecord = new CustomerFollowRecord();
-        followRecord.setLeadId(saved.getId());
-        followRecord.setFollowAt(LocalDateTime.now());
-        followRecord.setContactMethod("PHONE");
-        followRecord.setCommunicationSummary("公开表单提交需求登记");
-        followRecord.setCustomerNeed(defaultIfBlank(request.initialNeedType(), "待补充"));
-        followRecord.setOurFeedback("已收到需求登记，待顾问分配");
-        followRecord.setOwnerName("SYSTEM");
-        followRecord.setLevelAfter(saved.getCustomerLevel());
-        customerFollowRecordRepository.save(followRecord);
-
-        operationLogService.log("LEAD", saved.getId(), "CREATE_PUBLIC", "PUBLIC", "公开表单创建客户并进入待分配");
         return saved;
     }
 

@@ -7,7 +7,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "app")
 public class AppProperties {
     private Jwt jwt = new Jwt();
-    private PublicFeedback publicFeedback = new PublicFeedback();
     private String uploadDir = "uploads";
 
     @Data
@@ -15,10 +14,5 @@ public class AppProperties {
         private String issuer;
         private String secret;
         private long accessTokenMinutes;
-    }
-
-    @Data
-    public static class PublicFeedback {
-        private long expireDays;
     }
 }

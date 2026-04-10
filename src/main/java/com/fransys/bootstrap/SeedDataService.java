@@ -50,8 +50,8 @@ public class SeedDataService implements CommandLineRunner {
             return;
         }
         createRole(RoleCode.ROLE_ADMIN.name(), "管理员", "系统全量管理");
-        createRole(RoleCode.ROLE_SALES.name(), "销售", "线索和需求评估");
-        createRole(RoleCode.ROLE_OPERATIONS.name(), "运营", "匹配、交付、售后");
+        createRole(RoleCode.ROLE_SALES.name(), "销售", "客户管理与推荐跟进");
+        createRole(RoleCode.ROLE_OPERATIONS.name(), "运营", "供给维护与业务协同");
     }
 
     private void createRole(String code, String name, String description) {
@@ -102,11 +102,6 @@ public class SeedDataService implements CommandLineRunner {
 
     private void seedDicts() {
         seed("source_channel", List.of("科普宣传", "老客户", "转介绍", "社交媒体", "广告投放", "自然咨询"));
-        seed("channel_trust_level", List.of("强信任", "半信任", "弱信任"));
-        seed("service_object", List.of("本人", "父母", "长辈", "家庭成员"));
-        seed("need_type", List.of("调理", "康护", "陪护", "上门服务", "到店服务", "其他"));
-        seed("service_preference", List.of("上门", "到店", "均可"));
-        seed("urgency", List.of("高", "中", "低"));
         seedPairs("customer_level", List.of(
                 new String[]{"A", "A级高意向"},
                 new String[]{"B", "B级潜力"},
@@ -117,23 +112,6 @@ public class SeedDataService implements CommandLineRunner {
                 new String[]{"B", "尊享"},
                 new String[]{"C", "基础"},
                 new String[]{"D", "会员"}));
-        seed("current_status", List.of("待分配", "待跟进", "跟进中", "已报价", "已推荐", "已成交", "已归档"));
-        seed("decision_speed", List.of("快", "中", "慢"));
-        seed("price_sensitivity", List.of("高", "中", "低"));
-        seed("certification_interest", List.of("强", "中", "弱"));
-        seed("goal_type", List.of("缓解", "调理", "康复", "日常支持", "周期管理"));
-        seed("risk_concern", List.of("不专业", "不稳定", "不安全", "无法持续", "无人负责"));
-        seed("decision_mode", List.of("本人拍板", "家庭共同决策", "其他"));
-        seed("start_mode", List.of("先试单", "直接周期服务", "先咨询"));
-        seed("service_mode", List.of("上门", "到店", "组合"));
-        seed("certification_status", List.of("已认证", "认证中"));
-        seed("satisfaction_score", List.of("1", "2", "3", "4", "5"));
-        seed("repurchase_possibility", List.of("高", "中", "低"));
-        seed("customer_lifecycle_status", List.of("首单客户", "活跃客户", "复购客户", "沉默客户", "流失客户"));
-        seed("enterprise_performance_level", List.of("优秀", "良好", "一般", "较差"));
-        seed("contact_method", List.of("PHONE", "WECHAT", "EMAIL", "VISIT"));
-        seed("product_category", List.of("基础调理", "康复护理", "陪护服务", "专项方案"));
-        seed("applicable_people", List.of("术后恢复", "长者照护", "慢病管理", "家庭康护"));
     }
 
     private void seed(String dictType, List<String> labels) {

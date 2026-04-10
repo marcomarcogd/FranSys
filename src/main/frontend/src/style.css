@@ -149,18 +149,6 @@ a {
   gap: 12px;
 }
 
-.toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-}
-
-.toolbar-title {
-  font-size: 18px;
-  font-weight: 700;
-}
-
 .section-toolbar {
   display: flex;
   justify-content: space-between;
@@ -231,8 +219,7 @@ a {
   width: 100%;
 }
 
-.auth-page,
-.public-shell {
+.auth-page {
   min-height: 100vh;
   display: grid;
   place-items: center;
@@ -247,7 +234,6 @@ a {
 }
 
 .hero-card,
-.public-card,
 .form-card {
   border-radius: 24px;
   border: 1px solid rgba(17, 33, 45, 0.08);
@@ -281,8 +267,7 @@ a {
   font-weight: 700;
 }
 
-.form-card,
-.public-card {
+.form-card {
   padding: 4px;
 }
 
@@ -291,16 +276,6 @@ a {
   justify-content: space-between;
   align-items: center;
   gap: 16px;
-}
-
-.public-summary {
-  margin-bottom: 16px;
-  padding: 14px 16px;
-  background: #f3f5f7;
-  border-radius: 14px;
-  color: #5f7183;
-  display: grid;
-  gap: 6px;
 }
 
 .role-name {
@@ -312,17 +287,14 @@ a {
   margin-top: 18px;
 }
 
+.grid-form .form-item-full {
+  grid-column: 1 / -1;
+}
+
 .list-card,
 .workspace-card,
 .filter-card {
   border-radius: 18px;
-}
-
-.detail-actions {
-  display: grid;
-  grid-template-columns: 180px 160px 1fr;
-  gap: 12px;
-  align-items: center;
 }
 
 .customer-workspace {
@@ -337,13 +309,6 @@ a {
   gap: 18px;
 }
 
-.split-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-}
-
 .customer-name-line {
   display: flex;
   align-items: center;
@@ -353,6 +318,37 @@ a {
 
 .customer-panels {
   align-items: start;
+}
+
+.intent-reference-block {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(17, 33, 45, 0.08);
+  display: grid;
+  gap: 12px;
+}
+
+.intent-reference-summary {
+  display: grid;
+  gap: 10px;
+  padding: 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(240, 138, 93, 0.24);
+  background: linear-gradient(135deg, rgba(255, 248, 241, 0.96), rgba(247, 244, 238, 0.98));
+}
+
+.intent-reference-topline {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  color: #617285;
+}
+
+.intent-reference-criteria {
+  color: #223748;
+  font-size: 15px;
+  line-height: 1.7;
 }
 
 .timeline-card,
@@ -448,7 +444,6 @@ a {
   .two-column,
   .grid-2,
   .grid-form,
-  .detail-actions,
   .customer-workspace {
     grid-template-columns: 1fr;
   }
