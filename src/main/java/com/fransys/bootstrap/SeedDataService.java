@@ -107,7 +107,16 @@ public class SeedDataService implements CommandLineRunner {
         seed("need_type", List.of("调理", "康护", "陪护", "上门服务", "到店服务", "其他"));
         seed("service_preference", List.of("上门", "到店", "均可"));
         seed("urgency", List.of("高", "中", "低"));
-        seed("customer_level", List.of("A", "B", "C", "D"));
+        seedPairs("customer_level", List.of(
+                new String[]{"A", "A级高意向"},
+                new String[]{"B", "B级潜力"},
+                new String[]{"C", "C级普通"},
+                new String[]{"D", "D级沉默"}));
+        seedPairs("customer_value_level", List.of(
+                new String[]{"A", "私定"},
+                new String[]{"B", "尊享"},
+                new String[]{"C", "基础"},
+                new String[]{"D", "会员"}));
         seed("current_status", List.of("待分配", "待跟进", "跟进中", "已报价", "已推荐", "已成交", "已归档"));
         seed("decision_speed", List.of("快", "中", "慢"));
         seed("price_sensitivity", List.of("高", "中", "低"));
@@ -136,6 +145,22 @@ public class SeedDataService implements CommandLineRunner {
             item.setDictType(dictType);
             item.setItemKey(labels.get(i));
             item.setItemLabel(labels.get(i));
+            item.setSortOrder(i + 1);
+            item.setEnabled(true);
+            dictItemRepository.save(item);
+        }
+    }
+
+    private void seedPairs(String dictType, List<String[]> pairs) {
+        for (int i = 0; i < pairs.size(); i++) {
+            String[] pair = pairs.get(i);
+            if (dictItemRepository.existsByDictTypeAndItemKey(dictType, pair[0])) {
+                continue;
+            }
+            DictItem item = new DictItem();
+            item.setDictType(dictType);
+            item.setItemKey(pair[0]);
+            item.setItemLabel(pair[1]);
             item.setSortOrder(i + 1);
             item.setEnabled(true);
             dictItemRepository.save(item);

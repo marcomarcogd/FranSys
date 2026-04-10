@@ -20,9 +20,14 @@
             <el-option v-for="item in dicts.source_channel || []" :key="item.id" :label="item.itemLabel" :value="item.itemKey" />
           </el-select>
         </el-form-item>
-        <el-form-item label="客户等级">
+        <el-form-item label="意向等级">
           <el-select v-model="filters.customerLevel" clearable style="width: 320px" placeholder="请选择">
-            <el-option v-for="item in levelOptions" :key="item.value" :label="item.optionLabel" :value="item.value" />
+            <el-option v-for="item in intentLevelOptions" :key="item.value" :label="item.optionLabel" :value="item.value" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="价值等级">
+          <el-select v-model="filters.customerValueLevel" clearable style="width: 220px" placeholder="请选择">
+            <el-option v-for="item in valueLevelOptions" :key="item.value" :label="item.optionLabel" :value="item.value" />
           </el-select>
         </el-form-item>
         <el-form-item v-if="canManageOwnership" label="负责人">
@@ -96,9 +101,14 @@
           @row-click="selectCustomer"
         >
           <el-table-column prop="customerName" label="客户" min-width="110" />
-          <el-table-column label="等级" width="82">
+          <el-table-column label="意向" width="82">
             <template #default="{ row }">
               <el-tag effect="plain">{{ customerLevelShortLabel(row.customerLevel) }}</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="价值" width="82">
+            <template #default="{ row }">
+              <el-tag effect="plain" type="success">{{ customerValueLevelShortLabel(row.customerValueLevel) }}</el-tag>
             </template>
           </el-table-column>
           <el-table-column prop="sourceChannel" label="来源" min-width="110" show-overflow-tooltip />
@@ -130,7 +140,8 @@
                 <div class="section-title-group">
                   <div class="customer-name-line">
                     <span class="section-title">{{ detail.customer.customerName }}</span>
-                    <el-tag>{{ customerLevelShortLabel(detail.customer.customerLevel) }}</el-tag>
+                    <el-tag>{{ `意向 ${customerLevelShortLabel(detail.customer.customerLevel)}` }}</el-tag>
+                    <el-tag type="success">{{ `价值 ${customerValueLevelShortLabel(detail.customer.customerValueLevel)}` }}</el-tag>
                     <el-tag :type="detail.customer.ownerId ? 'warning' : 'danger'">
                       {{ detail.customer.currentStatus || '待跟进' }}
                     </el-tag>
@@ -150,10 +161,12 @@
               <el-descriptions-item label="客户编号">{{ detail.customer.leadNo }}</el-descriptions-item>
               <el-descriptions-item label="联系电话">{{ detail.customer.contactPhone || '未填写' }}</el-descriptions-item>
               <el-descriptions-item label="负责人">{{ detail.customer.ownerName || '未分配' }}</el-descriptions-item>
+              <el-descriptions-item label="意向等级">{{ customerLevelLabel(detail.customer.customerLevel) }}</el-descriptions-item>
               <el-descriptions-item label="性别">{{ detail.customer.gender || '未填写' }}</el-descriptions-item>
               <el-descriptions-item label="年龄">{{ detail.customer.age || '未填写' }}</el-descriptions-item>
               <el-descriptions-item label="邮箱">{{ detail.customer.email || '未填写' }}</el-descriptions-item>
               <el-descriptions-item label="微信">{{ detail.customer.wechatNo || '未填写' }}</el-descriptions-item>
+              <el-descriptions-item label="价值等级">{{ customerValueLevelLabel(detail.customer.customerValueLevel) }}</el-descriptions-item>
               <el-descriptions-item label="地区">{{ detail.customer.region || detail.customer.cityArea || '未填写' }}</el-descriptions-item>
               <el-descriptions-item label="来源渠道">{{ detail.customer.sourceChannel || '未填写' }}</el-descriptions-item>
               <el-descriptions-item label="当前需求">{{ detail.customer.initialNeedType || '未填写' }}</el-descriptions-item>
@@ -201,7 +214,7 @@
                     <div><strong>下一步：</strong>{{ item.nextAction || '未填写' }}</div>
                     <div class="muted-inline">下次跟进：{{ item.nextFollowUpAt || '未安排' }}</div>
                     <div class="muted-inline">
-                      等级变化：{{ customerLevelShortLabel(item.levelBefore) }} → {{ customerLevelShortLabel(item.levelAfter) }}
+                      意向等级变化：{{ customerLevelShortLabel(item.levelBefore) }} → {{ customerLevelShortLabel(item.levelAfter) }}
                     </div>
                   </el-card>
                 </el-timeline-item>
@@ -277,13 +290,18 @@
             <el-option v-for="item in dicts.source_channel || []" :key="item.id" :label="item.itemLabel" :value="item.itemKey" />
           </el-select>
         </el-form-item>
-        <el-form-item label="客户等级">
+        <el-form-item label="意向等级">
           <div style="width: 100%">
             <el-select v-model="customerForm.customerLevel" style="width: 100%" placeholder="请选择">
-              <el-option v-for="item in levelOptions" :key="item.value" :label="item.optionLabel" :value="item.value" />
+              <el-option v-for="item in intentLevelOptions" :key="item.value" :label="item.optionLabel" :value="item.value" />
             </el-select>
             <div class="field-help">{{ customerLevelHint(customerForm.customerLevel) }}</div>
           </div>
+        </el-form-item>
+        <el-form-item label="价值等级">
+          <el-select v-model="customerForm.customerValueLevel" style="width: 100%" placeholder="请选择">
+            <el-option v-for="item in valueLevelOptions" :key="item.value" :label="item.optionLabel" :value="item.value" />
+          </el-select>
         </el-form-item>
         <el-form-item v-if="canManageOwnership" label="负责人">
           <el-select v-model="customerForm.ownerId" clearable filterable style="width: 100%" placeholder="请选择负责人">
@@ -341,10 +359,10 @@
         <el-form-item label="下次跟进">
           <el-date-picker v-model="followForm.nextFollowUpAt" type="datetime" value-format="YYYY-MM-DDTHH:mm:ss" style="width: 100%" placeholder="请选择时间" />
         </el-form-item>
-        <el-form-item label="更新等级">
+        <el-form-item label="更新意向等级">
           <div style="width: 100%">
             <el-select v-model="followForm.customerLevel" style="width: 100%" placeholder="请选择">
-              <el-option v-for="item in levelOptions" :key="item.value" :label="item.optionLabel" :value="item.value" />
+              <el-option v-for="item in intentLevelOptions" :key="item.value" :label="item.optionLabel" :value="item.value" />
             </el-select>
             <div class="field-help">{{ customerLevelHint(followForm.customerLevel) }}</div>
           </div>
@@ -415,9 +433,14 @@ import { api } from '../../api/fransys'
 import { useAuthStore } from '../../store/auth'
 import {
   customerLevelHint,
+  customerLevelLabel,
   customerLevelOptionLabel,
   customerLevelOptions,
   customerLevelShortLabel,
+  customerValueLevelLabel,
+  customerValueLevelOptionLabel,
+  customerValueLevelOptions,
+  customerValueLevelShortLabel,
   isBlank,
   isValidEmail,
   isValidPhone,
@@ -455,6 +478,7 @@ const filters = reactive<any>({
   keyword: '',
   sourceChannel: '',
   customerLevel: '',
+  customerValueLevel: '',
   ownerId: undefined,
   includeUnassigned: true,
   unassignedOnly: false,
@@ -463,9 +487,13 @@ const filters = reactive<any>({
   nextFollowRange: [],
 })
 
-const levelOptions = customerLevelOptions.map((item) => ({
+const intentLevelOptions = customerLevelOptions.map((item) => ({
   ...item,
   optionLabel: customerLevelOptionLabel(item.value),
+}))
+const valueLevelOptions = customerValueLevelOptions.map((item) => ({
+  ...item,
+  optionLabel: customerValueLevelOptionLabel(item.value),
 }))
 
 const contactMethods = [
@@ -493,6 +521,7 @@ function resetCustomerForm() {
     region: '',
     sourceChannel: '',
     customerLevel: 'B',
+    customerValueLevel: 'C',
     currentStatus: canManageOwnership.value ? '待分配' : '待跟进',
     referrerName: '',
     initialNeedType: '',
@@ -551,6 +580,7 @@ async function loadCustomers() {
     keyword: filters.keyword,
     sourceChannel: filters.sourceChannel,
     customerLevel: filters.customerLevel,
+    customerValueLevel: filters.customerValueLevel,
     archived: filters.archived,
   }
   if (canManageOwnership.value) {
@@ -738,6 +768,7 @@ function resetFilters() {
     keyword: '',
     sourceChannel: '',
     customerLevel: '',
+    customerValueLevel: '',
     ownerId: undefined,
     includeUnassigned: canViewUnassigned.value,
     unassignedOnly: false,

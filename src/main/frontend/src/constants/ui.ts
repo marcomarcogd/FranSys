@@ -2,37 +2,60 @@ export const customerLevelOptions = [
   {
     value: 'A',
     shortLabel: 'A级',
-    meaning: '近期成交意向高',
+    meaning: '高意向',
     followAdvice: '建议每 3 天跟进 1 次',
   },
   {
     value: 'B',
     shortLabel: 'B级',
-    meaning: '需求明确，正在比较',
+    meaning: '潜力',
     followAdvice: '建议每周跟进 1 次',
   },
   {
     value: 'C',
     shortLabel: 'C级',
-    meaning: '已留资，互动较弱',
+    meaning: '普通',
     followAdvice: '建议每 2 周跟进 1 次',
   },
   {
     value: 'D',
     shortLabel: 'D级',
-    meaning: '长期未响应或已失效',
+    meaning: '沉默',
     followAdvice: '建议季度触达或归档',
+  },
+]
+
+export const customerValueLevelOptions = [
+  {
+    value: 'A',
+    shortLabel: 'A级',
+    meaning: '私定',
+  },
+  {
+    value: 'B',
+    shortLabel: 'B级',
+    meaning: '尊享',
+  },
+  {
+    value: 'C',
+    shortLabel: 'C级',
+    meaning: '基础',
+  },
+  {
+    value: 'D',
+    shortLabel: 'D级',
+    meaning: '会员',
   },
 ]
 
 export function customerLevelLabel(value?: string) {
   const option = customerLevelOptions.find((item) => item.value === value)
-  return option ? `${option.shortLabel} · ${option.meaning}` : value || '未分级'
+  return option ? `${option.shortLabel}${option.meaning}` : value || '未分级'
 }
 
 export function customerLevelOptionLabel(value?: string) {
   const option = customerLevelOptions.find((item) => item.value === value)
-  return option ? `${option.shortLabel} · ${option.meaning}，${option.followAdvice}` : value || '未分级'
+  return option ? `${option.shortLabel}${option.meaning}，${option.followAdvice}` : value || '未分级'
 }
 
 export function customerLevelShortLabel(value?: string) {
@@ -41,7 +64,21 @@ export function customerLevelShortLabel(value?: string) {
 
 export function customerLevelHint(value?: string) {
   const option = customerLevelOptions.find((item) => item.value === value)
-  return option ? `${option.shortLabel} · ${option.followAdvice}` : '请先设置客户等级并安排后续跟进'
+  return option ? `${option.shortLabel}${option.meaning}，${option.followAdvice}` : '请先设置意向等级并安排后续跟进'
+}
+
+export function customerValueLevelLabel(value?: string) {
+  const option = customerValueLevelOptions.find((item) => item.value === value)
+  return option ? `${option.shortLabel}${option.meaning}` : value || '未分级'
+}
+
+export function customerValueLevelOptionLabel(value?: string) {
+  const option = customerValueLevelOptions.find((item) => item.value === value)
+  return option ? `${option.shortLabel}${option.meaning}` : value || '未分级'
+}
+
+export function customerValueLevelShortLabel(value?: string) {
+  return customerValueLevelOptions.find((item) => item.value === value)?.shortLabel || value || '未分级'
 }
 
 export function recommendationTypeLabel(value?: string) {

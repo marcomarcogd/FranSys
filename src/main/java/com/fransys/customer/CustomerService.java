@@ -46,6 +46,7 @@ public class CustomerService {
             String keyword,
             String sourceChannel,
             String customerLevel,
+            String customerValueLevel,
             Long ownerId,
             Boolean includeUnassigned,
             Boolean unassignedOnly,
@@ -59,6 +60,7 @@ public class CustomerService {
                 .filter(customer -> matchesKeyword(customer, keyword))
                 .filter(customer -> isBlank(sourceChannel) || Objects.equals(customer.getSourceChannel(), sourceChannel))
                 .filter(customer -> isBlank(customerLevel) || Objects.equals(customer.getCustomerLevel(), customerLevel))
+                .filter(customer -> isBlank(customerValueLevel) || Objects.equals(customer.getCustomerValueLevel(), customerValueLevel))
                 .filter(customer -> archived == null || Objects.equals(Boolean.TRUE.equals(customer.getArchived()), archived))
                 .filter(customer -> inRange(customer.getLastFollowUpAt(), lastFollowStart, lastFollowEnd))
                 .filter(customer -> inRange(customer.getFollowUpAt(), nextFollowStart, nextFollowEnd))
@@ -101,6 +103,7 @@ public class CustomerService {
         customer.setCityArea(request.region());
         customer.setSourceChannel(request.sourceChannel());
         customer.setCustomerLevel(defaultIfBlank(request.customerLevel(), customer.getCustomerLevel()));
+        customer.setCustomerValueLevel(defaultIfBlank(request.customerValueLevel(), customer.getCustomerValueLevel()));
         customer.setCurrentStatus(defaultIfBlank(request.currentStatus(), defaultIfBlank(customer.getCurrentStatus(), "待跟进")));
         customer.setReferrerName(request.referrerName());
         customer.setInitialNeedType(request.initialNeedType());
@@ -152,6 +155,7 @@ public class CustomerService {
         customer.setUrgency(request.urgency());
         customer.setBudgetRange(request.budgetRange());
         customer.setCustomerLevel("B");
+        customer.setCustomerValueLevel("C");
         customer.setCurrentStatus("待分配");
         customer.setArchived(false);
         customer.setRemark(request.remark());
@@ -470,6 +474,7 @@ public class CustomerService {
                 customer.getContactPhone(),
                 customer.getSourceChannel(),
                 customer.getCustomerLevel(),
+                customer.getCustomerValueLevel(),
                 customer.getOwnerId(),
                 customer.getOwnerName(),
                 customer.getCurrentStatus(),
@@ -482,11 +487,11 @@ public class CustomerService {
 
     private String followFrequencyHint(String level) {
         return switch (defaultIfBlank(level, "").toUpperCase(Locale.ROOT)) {
-            case "A" -> "A级 · 建议每 3 天跟进 1 次";
-            case "B" -> "B级 · 建议每周跟进 1 次";
-            case "C" -> "C级 · 建议每 2 周跟进 1 次";
-            case "D" -> "D级 · 建议季度触达或归档";
-            default -> "请先设置客户等级并安排后续跟进";
+            case "A" -> "A级高意向 · 建议每 3 天跟进 1 次";
+            case "B" -> "B级潜力 · 建议每周跟进 1 次";
+            case "C" -> "C级普通 · 建议每 2 周跟进 1 次";
+            case "D" -> "D级沉默 · 建议季度触达或归档";
+            default -> "请先设置意向等级并安排后续跟进";
         };
     }
 

@@ -99,6 +99,9 @@ public class CustomerLead extends BaseEntity {
     @Column(name = "customer_level", length = 32)
     private String customerLevel;
 
+    @Column(name = "customer_value_level", length = 32)
+    private String customerValueLevel;
+
     @Column(name = "current_status", length = 32)
     private String currentStatus;
 

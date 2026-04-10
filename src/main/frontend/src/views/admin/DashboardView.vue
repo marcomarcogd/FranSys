@@ -32,7 +32,7 @@
               <span class="table-link" @click="openCustomer(row.id)">{{ row.customerName }}</span>
             </template>
           </el-table-column>
-          <el-table-column label="等级" width="80">
+          <el-table-column label="意向" width="80">
             <template #default="{ row }">{{ customerLevelShortLabel(row.customerLevel) }}</template>
           </el-table-column>
           <el-table-column prop="ownerName" label="负责人" width="110">
@@ -60,7 +60,7 @@
             </template>
           </el-table-column>
           <el-table-column prop="sourceChannel" label="来源" min-width="100" />
-          <el-table-column label="等级" width="80">
+          <el-table-column label="意向" width="80">
             <template #default="{ row }">{{ customerLevelShortLabel(row.customerLevel) }}</template>
           </el-table-column>
         </el-table>
@@ -113,9 +113,9 @@
       </el-card>
 
       <el-card shadow="never" class="workspace-card">
-        <template #header><div class="section-title">客户等级</div></template>
+        <template #header><div class="section-title">意向等级</div></template>
         <el-table :data="customerLevelStats" size="small" class="mini-table" empty-text="暂无数据">
-          <el-table-column prop="label" label="等级" />
+          <el-table-column prop="label" label="意向" />
           <el-table-column prop="value" label="数量" width="90" />
         </el-table>
       </el-card>
