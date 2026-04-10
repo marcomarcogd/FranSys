@@ -16,12 +16,9 @@
           </el-select>
         </el-form-item>
         <el-form-item label="客户等级">
-          <div style="display: flex; align-items: center; gap: 8px">
-            <el-select v-model="filters.customerLevel" clearable style="width: 120px">
-              <el-option v-for="item in dicts.customer_level || []" :key="item.id" :label="item.itemLabel" :value="item.itemKey" />
-            </el-select>
-            <IntentLevelGuideDialog />
-          </div>
+          <el-select v-model="filters.customerLevel" clearable style="width: 120px">
+            <el-option v-for="item in dicts.customer_level || []" :key="item.id" :label="item.itemLabel" :value="item.itemKey" />
+          </el-select>
         </el-form-item>
         <el-form-item label="当前状态">
           <el-select v-model="filters.currentStatus" clearable style="width: 140px">
@@ -84,9 +81,6 @@
         </el-form-item>
         <el-form-item label="预算区间"><el-input v-model="form.budgetRange" /></el-form-item>
         <el-form-item label="下次跟进"><el-date-picker v-model="form.followUpAt" type="datetime" style="width: 100%" value-format="YYYY-MM-DDTHH:mm:ss" /></el-form-item>
-        <el-form-item label="意向等级判定">
-          <IntentLevelGuideDialog />
-        </el-form-item>
       </el-form>
       <el-form :model="form" label-width="110px">
         <el-form-item label="备注"><el-input v-model="form.remark" type="textarea" :rows="3" /></el-form-item>
@@ -104,7 +98,6 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { api } from '../../api/fransys'
-import IntentLevelGuideDialog from '../../components/IntentLevelGuideDialog.vue'
 
 const route = useRoute()
 const router = useRouter()
