@@ -1,30 +1,36 @@
 <template>
   <div class="page-stack">
-    <div class="toolbar">
-      <div class="toolbar-title">企业库</div>
+    <div class="page-actions">
       <el-button type="primary" @click="openDialog()">新增企业</el-button>
     </div>
-    <div class="public-summary">
-      <div>企业库用于维护合作主体基础资料，后续产品库和推荐方案都会引用这里的信息。</div>
-      <div>建议至少补齐企业名称、联系人、联系方式和品牌优势。</div>
-    </div>
-    <el-table :data="rows" border empty-text="暂无企业数据，请先新增企业">
-      <el-table-column prop="name" label="企业名称" min-width="180" />
-      <el-table-column prop="contactPerson" label="联系人" width="120" />
-      <el-table-column prop="phone" label="联系方式" width="140" />
-      <el-table-column prop="serviceArea" label="服务区域" min-width="180" />
-      <el-table-column prop="brandAdvantage" label="品牌优势" min-width="220" show-overflow-tooltip />
-      <el-table-column prop="certificationStatus" label="认证状态" width="100" />
-      <el-table-column prop="certificationLevel" label="认证等级" width="100" />
-      <el-table-column prop="priceRange" label="价格区间" width="140" />
-      <el-table-column label="操作" width="100">
-        <template #default="{ row }">
-          <el-button link type="primary" @click="openDialog(row)">编辑</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+    <el-card shadow="never" class="workspace-card">
+      <template #header>
+        <div class="section-toolbar">
+          <div class="section-title-group">
+            <div class="section-title">企业列表</div>
+            <div class="section-subtitle">维护合作企业的联系人、服务范围和品牌优势</div>
+          </div>
+          <el-tag type="info">{{ rows.length }} 家</el-tag>
+        </div>
+      </template>
+      <el-table :data="rows" border empty-text="当前还没有企业资料">
+        <el-table-column prop="name" label="企业名称" min-width="180" />
+        <el-table-column prop="contactPerson" label="联系人" width="120" />
+        <el-table-column prop="phone" label="联系方式" width="140" />
+        <el-table-column prop="serviceArea" label="服务区域" min-width="180" />
+        <el-table-column prop="brandAdvantage" label="品牌优势" min-width="220" show-overflow-tooltip />
+        <el-table-column prop="certificationStatus" label="认证状态" width="100" />
+        <el-table-column prop="certificationLevel" label="认证等级" width="100" />
+        <el-table-column prop="priceRange" label="价格区间" width="140" />
+        <el-table-column label="操作" width="100">
+          <template #default="{ row }">
+            <el-button link type="primary" @click="openDialog(row)">编辑</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </el-card>
 
-    <el-dialog v-model="dialogVisible" title="企业信息" width="760px">
+    <el-dialog v-model="dialogVisible" :title="form.id ? '编辑企业' : '新增企业'" width="760px">
       <el-form :model="form" label-width="110px" class="grid-form">
         <el-form-item label="企业名称"><el-input v-model="form.name" placeholder="请输入企业名称" clearable /></el-form-item>
         <el-form-item label="联系人"><el-input v-model="form.contactPerson" placeholder="请输入联系人姓名" clearable /></el-form-item>
@@ -41,7 +47,7 @@
         <el-form-item label="服务时间"><el-input v-model="form.serviceTime" placeholder="请输入可服务时间" clearable /></el-form-item>
         <el-form-item label="特殊限制"><el-input v-model="form.specialLimit" placeholder="请输入特殊限制或接单边界" clearable /></el-form-item>
       </el-form>
-      <el-form :model="form" label-width="110px">
+      <el-form :model="form" label-width="110px" class="dialog-section">
         <el-form-item label="品牌优势"><el-input v-model="form.brandAdvantage" type="textarea" :rows="3" placeholder="请输入企业的品牌优势、服务亮点或差异化说明" /></el-form-item>
       </el-form>
       <template #footer>

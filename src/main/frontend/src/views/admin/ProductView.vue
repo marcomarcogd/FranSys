@@ -1,22 +1,24 @@
 <template>
   <div class="page-stack">
-    <el-card shadow="never">
-      <div class="toolbar">
-        <div class="toolbar-title">产品库</div>
-        <el-button type="primary" @click="openDialog()">新增产品</el-button>
-      </div>
-      <div class="public-summary">
-        <div>一个企业可维护多款产品，建议先补齐价格、适用人群、服务流程和监管说明。</div>
-        <div>产品图片支持上传，也可直接粘贴已有图片地址。</div>
+    <div class="page-actions">
+      <el-button type="primary" @click="openDialog()">新增产品</el-button>
+    </div>
+
+    <el-card shadow="never" class="filter-card">
+      <div class="section-toolbar">
+        <div class="section-title-group">
+          <div class="section-title">筛选条件</div>
+          <div class="section-subtitle">按所属企业和分类快速定位产品</div>
+        </div>
       </div>
       <el-form :inline="true" :model="filters">
         <el-form-item label="所属企业">
-          <el-select v-model="filters.enterpriseId" clearable style="width: 220px" placeholder="请选择所属企业">
+          <el-select v-model="filters.enterpriseId" clearable style="width: 220px" placeholder="请选择">
             <el-option v-for="item in enterprises" :key="item.id" :label="item.name" :value="item.id" />
           </el-select>
         </el-form-item>
         <el-form-item label="分类">
-          <el-input v-model="filters.category" placeholder="输入分类关键字筛选" clearable />
+          <el-input v-model="filters.category" placeholder="请输入分类关键词" clearable />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="load">查询</el-button>
@@ -25,34 +27,45 @@
       </el-form>
     </el-card>
 
-    <el-table :data="rows" border empty-text="暂无产品数据，请先新增产品">
-      <el-table-column label="配图" width="100">
-        <template #default="{ row }">
-          <el-image v-if="row.imageUrl" :src="row.imageUrl" fit="cover" class="product-thumb" />
-          <span v-else class="muted-inline">未上传</span>
-        </template>
-      </el-table-column>
-      <el-table-column prop="name" label="产品名称" min-width="180" />
-      <el-table-column prop="enterpriseName" label="所属企业" min-width="160" />
-      <el-table-column prop="category" label="分类" width="120" />
-      <el-table-column prop="applicablePeople" label="适用人群" min-width="120" />
-      <el-table-column prop="price" label="价格" width="100" />
-      <el-table-column label="状态" width="90">
-        <template #default="{ row }">
-          <el-tag :type="row.active ? 'success' : 'info'">{{ row.active ? '启用' : '停用' }}</el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column label="操作" width="100" fixed="right">
-        <template #default="{ row }">
-          <el-button link type="primary" @click="openDialog(row)">编辑</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+    <el-card shadow="never" class="workspace-card">
+      <template #header>
+        <div class="section-toolbar">
+          <div class="section-title-group">
+            <div class="section-title">产品列表</div>
+            <div class="section-subtitle">维护产品基础信息、图片和服务说明</div>
+          </div>
+          <el-tag type="info">{{ rows.length }} 个</el-tag>
+        </div>
+      </template>
+      <el-table :data="rows" border empty-text="当前还没有产品资料">
+        <el-table-column label="配图" width="100">
+          <template #default="{ row }">
+            <el-image v-if="row.imageUrl" :src="row.imageUrl" fit="cover" class="product-thumb" />
+            <span v-else class="muted-inline">未上传</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="name" label="产品名称" min-width="180" />
+        <el-table-column prop="enterpriseName" label="所属企业" min-width="160" />
+        <el-table-column prop="category" label="分类" width="120" />
+        <el-table-column prop="applicablePeople" label="适用人群" min-width="120" />
+        <el-table-column prop="price" label="价格" width="100" />
+        <el-table-column label="状态" width="90">
+          <template #default="{ row }">
+            <el-tag :type="row.active ? 'success' : 'info'">{{ row.active ? '启用' : '停用' }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="100" fixed="right">
+          <template #default="{ row }">
+            <el-button link type="primary" @click="openDialog(row)">编辑</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </el-card>
 
     <el-dialog v-model="dialogVisible" :title="form.id ? '编辑产品' : '新增产品'" width="860px">
       <el-form :model="form" label-width="110px" class="grid-form">
         <el-form-item label="所属企业">
-          <el-select v-model="form.enterpriseId" style="width: 100%" placeholder="请选择所属企业">
+          <el-select v-model="form.enterpriseId" style="width: 100%" placeholder="请选择">
             <el-option v-for="item in enterprises" :key="item.id" :label="item.name" :value="item.id" />
           </el-select>
         </el-form-item>
@@ -66,7 +79,7 @@
       <el-form :model="form" label-width="110px">
         <el-form-item label="配图">
           <div class="upload-block">
-            <div class="muted-text">支持上传图片文件；若已有固定地址，也可以直接填写图片 URL。</div>
+            <div class="field-help">支持上传图片，也可以直接填写图片地址。</div>
             <el-upload :show-file-list="false" :http-request="uploadImage">
               <el-button>上传图片</el-button>
             </el-upload>

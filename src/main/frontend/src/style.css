@@ -81,6 +81,18 @@ a {
   border-right: 0 !important;
   background: transparent !important;
   overflow-y: auto;
+  padding-right: 6px;
+}
+
+.sidebar-menu .el-menu-item-group__title {
+  padding: 18px 10px 8px !important;
+  line-height: 1.2;
+}
+
+.menu-group-title {
+  color: rgba(255, 255, 255, 0.52);
+  font-size: 12px;
+  letter-spacing: 0.08em;
 }
 
 .sidebar-menu .el-menu-item {
@@ -130,15 +142,47 @@ a {
   gap: 18px;
 }
 
+.page-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+}
+
 .toolbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 12px;
 }
 
 .toolbar-title {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
+}
+
+.section-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.section-title-group {
+  display: grid;
+  gap: 4px;
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.section-subtitle,
+.field-help {
+  color: #6a7b8d;
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .stat-grid {
@@ -167,6 +211,12 @@ a {
 .two-column {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.three-column {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 18px;
 }
 
@@ -262,6 +312,12 @@ a {
   margin-top: 18px;
 }
 
+.list-card,
+.workspace-card,
+.filter-card {
+  border-radius: 18px;
+}
+
 .detail-actions {
   display: grid;
   grid-template-columns: 180px 160px 1fr;
@@ -271,7 +327,7 @@ a {
 
 .customer-workspace {
   display: grid;
-  grid-template-columns: 360px minmax(0, 1fr);
+  grid-template-columns: 380px minmax(0, 1fr);
   gap: 18px;
 }
 
@@ -313,6 +369,32 @@ a {
 .recommendation-stack {
   display: grid;
   gap: 14px;
+}
+
+.dashboard-panels {
+  align-items: start;
+}
+
+.mini-table .el-table__cell {
+  padding-top: 9px;
+  padding-bottom: 9px;
+}
+
+.table-link {
+  color: #1f5f8b;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.empty-block {
+  padding: 32px 20px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px dashed rgba(17, 33, 45, 0.14);
+}
+
+.dialog-section {
+  margin-top: 8px;
 }
 
 .compact-toolbar {
@@ -379,5 +461,9 @@ a {
 
   .admin-sidebar {
     display: none;
+  }
+
+  .three-column {
+    grid-template-columns: 1fr;
   }
 }

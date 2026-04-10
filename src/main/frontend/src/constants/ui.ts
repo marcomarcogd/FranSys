@@ -1,37 +1,57 @@
 export const customerLevelOptions = [
   {
     value: 'A',
-    label: 'A',
-    description: '已报价/近期有明确计划，建议每 3 天跟进 1 次',
-    hint: 'A级客户建议每 3 天至少跟进 1 次',
+    shortLabel: 'A级',
+    meaning: '近期成交意向高',
+    followAdvice: '建议每 3 天跟进 1 次',
   },
   {
     value: 'B',
-    label: 'B',
-    description: '需求较明确/正在比较，建议每周跟进 1 次',
-    hint: 'B级客户建议每周至少跟进 1 次',
+    shortLabel: 'B级',
+    meaning: '需求明确，正在比较',
+    followAdvice: '建议每周跟进 1 次',
   },
   {
     value: 'C',
-    label: 'C',
-    description: '已留资但互动弱，建议每 2 周跟进 1 次',
-    hint: 'C级客户建议每 2 周至少跟进 1 次',
+    shortLabel: 'C级',
+    meaning: '已留资，互动较弱',
+    followAdvice: '建议每 2 周跟进 1 次',
   },
   {
     value: 'D',
-    label: 'D',
-    description: '长期无响应或失效，建议季度触达或归档',
-    hint: 'D级客户建议季度触达或归档',
+    shortLabel: 'D级',
+    meaning: '长期未响应或已失效',
+    followAdvice: '建议季度触达或归档',
   },
 ]
 
 export function customerLevelLabel(value?: string) {
   const option = customerLevelOptions.find((item) => item.value === value)
-  return option ? `${option.label}级：${option.description}` : value || '未分级'
+  return option ? `${option.shortLabel} · ${option.meaning}` : value || '未分级'
+}
+
+export function customerLevelOptionLabel(value?: string) {
+  const option = customerLevelOptions.find((item) => item.value === value)
+  return option ? `${option.shortLabel} · ${option.meaning}，${option.followAdvice}` : value || '未分级'
+}
+
+export function customerLevelShortLabel(value?: string) {
+  return customerLevelOptions.find((item) => item.value === value)?.shortLabel || value || '未分级'
 }
 
 export function customerLevelHint(value?: string) {
-  return customerLevelOptions.find((item) => item.value === value)?.hint || '请先为客户设置 A / B / C / D 等级'
+  const option = customerLevelOptions.find((item) => item.value === value)
+  return option ? `${option.shortLabel} · ${option.followAdvice}` : '请先设置客户等级并安排后续跟进'
+}
+
+export function recommendationTypeLabel(value?: string) {
+  if (value === 'PRODUCT') {
+    return '产品'
+  }
+  if (value === 'PACKAGE') {
+    return '套餐方案'
+  }
+  return value || '未设置'
 }
 
 export function isBlank(value: unknown) {

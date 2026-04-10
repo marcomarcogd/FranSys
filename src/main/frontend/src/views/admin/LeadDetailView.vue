@@ -3,7 +3,7 @@
     <el-card shadow="never">
       <div class="toolbar">
         <div>
-          <div class="toolbar-title">{{ detail.lead?.customerName || '客户详情' }}</div>
+          <div class="section-title">{{ detail.lead?.customerName || '客户详情' }}</div>
           <div class="muted-inline">线索编号：{{ detail.lead?.leadNo }} ｜ 当前阶段：{{ detail.lead?.workflowStage }} ｜ 当前状态：{{ detail.lead?.currentStatus }}</div>
         </div>
         <el-button @click="router.back()">返回</el-button>

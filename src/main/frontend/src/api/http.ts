@@ -8,10 +8,14 @@ const http = axios.create({
   timeout: 15000,
 })
 
-function clearAuthAndRedirect() {
+let authRedirecting = false
+
+function clearAuthAndRedirect(message = '登录已失效，请重新登录') {
   const authStore = useAuthStore()
   authStore.clearAuth()
-  if (location.pathname.startsWith('/admin')) {
+  if (location.pathname.startsWith('/admin') && !authRedirecting) {
+    authRedirecting = true
+    ElMessage.warning(message)
     location.href = '/login'
   }
 }
@@ -39,7 +43,8 @@ http.interceptors.response.use(
     }
     const message = toFriendlyErrorMessage(payload?.message || '请求失败')
     if (isAuthFailureMessage(message)) {
-      clearAuthAndRedirect()
+      clearAuthAndRedirect(message)
+      return Promise.reject(new Error(message))
     }
     ElMessage.error(message)
     return Promise.reject(new Error(message))
@@ -51,6 +56,7 @@ http.interceptors.response.use(
     const hasToken = !!authStore.token
     if (error.response?.status === 401 || (error.response?.status === 403 && hasToken && location.pathname.startsWith('/admin'))) {
       clearAuthAndRedirect()
+      return Promise.reject(error)
     }
     ElMessage.error(message)
     return Promise.reject(error)

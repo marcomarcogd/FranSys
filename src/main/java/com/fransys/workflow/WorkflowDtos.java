@@ -167,6 +167,7 @@ public class WorkflowDtos {
             List<DashboardStat> sourceChannelStats,
             List<DashboardStat> customerLevelStats,
             List<DashboardStat> recommendationTypeStats,
+            List<com.fransys.customer.CustomerDtos.CustomerListItem> dueFollowCustomers,
             List<com.fransys.customer.CustomerDtos.CustomerListItem> recentCustomers) {
     }
 

@@ -5,21 +5,30 @@
         <div class="brand-mark">Fran</div>
         <div>
           <div class="brand-title">FranSys</div>
-          <div class="brand-subtitle">内部运营系统</div>
+          <div class="brand-subtitle">客户与供给协同平台</div>
         </div>
       </div>
       <el-menu :default-active="activeMenuPath" class="sidebar-menu" router>
-        <el-menu-item v-for="item in menuRoutes" :key="item.name || item.path" :index="resolveMenuPath(item.path)">
-          <el-icon><component :is="item.meta?.icon || 'Menu'" /></el-icon>
-          <span>{{ item.meta?.title }}</span>
-        </el-menu-item>
+        <el-menu-item-group v-for="group in groupedMenuRoutes" :key="group.key">
+          <template #title>
+            <span class="menu-group-title">{{ group.label }}</span>
+          </template>
+          <el-menu-item
+            v-for="item in group.items"
+            :key="item.name || item.path"
+            :index="resolveMenuPath(item.path)"
+          >
+            <el-icon><component :is="item.meta?.icon || 'Menu'" /></el-icon>
+            <span>{{ item.meta?.title }}</span>
+          </el-menu-item>
+        </el-menu-item-group>
       </el-menu>
     </aside>
     <section class="admin-main">
       <header class="admin-header">
         <div>
           <div class="header-title">{{ route.meta?.title || 'FranSys' }}</div>
-          <div class="header-subtitle">客户跟进、企业供给、产品套餐与推荐一体化管理</div>
+          <div class="header-subtitle">{{ route.meta?.subtitle || '集中处理客户、供给和内部协作' }}</div>
         </div>
         <div class="header-actions">
           <el-tag type="success">{{ authStore.user?.displayName || '内部账号' }}</el-tag>
@@ -50,6 +59,11 @@ const customerAliasPaths = new Set([
   '/admin/delivery',
   '/admin/aftersales',
 ])
+const navGroups = [
+  { key: 'workspace', label: '工作台' },
+  { key: 'supply', label: '供给中心' },
+  { key: 'system', label: '系统设置' },
+]
 
 const menuRoutes = computed(() => {
   const adminRoute = router.getRoutes().find((item) => item.path === '/admin')
@@ -63,6 +77,15 @@ const menuRoutes = computed(() => {
     return !item.redirect
   })
 })
+
+const groupedMenuRoutes = computed(() =>
+  navGroups
+    .map((group) => ({
+      ...group,
+      items: menuRoutes.value.filter((item) => item.meta?.navGroup === group.key),
+    }))
+    .filter((group) => group.items.length),
+)
 
 const activeMenuPath = computed(() => {
   if (route.path.startsWith('/admin/detail/') || customerAliasPaths.has(route.path)) {

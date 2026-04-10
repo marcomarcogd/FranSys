@@ -44,7 +44,7 @@ public class CustomerService {
             LocalDateTime lastFollowEnd,
             LocalDateTime nextFollowStart,
             LocalDateTime nextFollowEnd) {
-        return customerLeadRepository.findAll(Sort.by(Sort.Direction.DESC, "updatedAt"))
+        return customerLeadRepository.findAll()
                 .stream()
                 .filter(customer -> matchesKeyword(customer, keyword))
                 .filter(customer -> isBlank(sourceChannel) || Objects.equals(customer.getSourceChannel(), sourceChannel))
@@ -52,6 +52,7 @@ public class CustomerService {
                 .filter(customer -> archived == null || Objects.equals(Boolean.TRUE.equals(customer.getArchived()), archived))
                 .filter(customer -> inRange(customer.getLastFollowUpAt(), lastFollowStart, lastFollowEnd))
                 .filter(customer -> inRange(customer.getFollowUpAt(), nextFollowStart, nextFollowEnd))
+                .sorted(customerPriorityComparator())
                 .map(this::toListItem)
                 .toList();
     }
@@ -228,6 +229,18 @@ public class CustomerService {
                 .count();
     }
 
+    public List<CustomerDtos.CustomerListItem> dueFollowCustomers() {
+        return customerLeadRepository.findAll().stream()
+                .filter(customer -> !Boolean.TRUE.equals(customer.getArchived()))
+                .filter(customer -> customer.getFollowUpAt() != null)
+                .sorted(
+                        Comparator.comparing(CustomerLead::getFollowUpAt, Comparator.nullsLast(LocalDateTime::compareTo))
+                                .thenComparing(CustomerLead::getUpdatedAt, Comparator.nullsLast(Comparator.reverseOrder())))
+                .limit(6)
+                .map(this::toListItem)
+                .toList();
+    }
+
     public List<CustomerDtos.CustomerListItem> recentCustomers() {
         return customerLeadRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt")).stream()
                 .limit(5)
@@ -333,12 +346,24 @@ public class CustomerService {
 
     private String followFrequencyHint(String level) {
         return switch (defaultIfBlank(level, "").toUpperCase(Locale.ROOT)) {
-            case "A" -> "A级客户：已报价/近期有明确计划，建议每 3 天跟进 1 次";
-            case "B" -> "B级客户：需求较明确/正在比较，建议每周跟进 1 次";
-            case "C" -> "C级客户：已留资但互动弱，建议每 2 周跟进 1 次";
-            case "D" -> "D级客户建议季度触达或归档";
-            default -> "请先为客户设置 A / B / C / D 等级";
+            case "A" -> "A级 · 建议每 3 天跟进 1 次";
+            case "B" -> "B级 · 建议每周跟进 1 次";
+            case "C" -> "C级 · 建议每 2 周跟进 1 次";
+            case "D" -> "D级 · 建议季度触达或归档";
+            default -> "请先设置客户等级并安排后续跟进";
         };
+    }
+
+    private Comparator<CustomerLead> customerPriorityComparator() {
+        LocalDateTime now = LocalDateTime.now();
+        return Comparator.comparing((CustomerLead customer) -> Boolean.TRUE.equals(customer.getArchived()))
+                .thenComparing(customer -> !isDueFollow(customer, now))
+                .thenComparing(CustomerLead::getFollowUpAt, Comparator.nullsLast(LocalDateTime::compareTo))
+                .thenComparing(CustomerLead::getUpdatedAt, Comparator.nullsLast(Comparator.reverseOrder()));
+    }
+
+    private boolean isDueFollow(CustomerLead customer, LocalDateTime now) {
+        return customer.getFollowUpAt() != null && !customer.getFollowUpAt().isAfter(now);
     }
 
     private boolean matchesKeyword(CustomerLead customer, String keyword) {

@@ -1,24 +1,30 @@
 <template>
   <div class="page-stack">
-    <div class="toolbar">
-      <div class="toolbar-title">字典配置</div>
+    <div class="page-actions">
       <el-button type="primary" @click="openDialog()">新增字典项</el-button>
     </div>
-    <div class="public-summary">
-      <div>字典项会影响下拉框和筛选项展示，请保持键值稳定、显示名称易懂。</div>
-      <div>新增前建议先确认同类型下是否已有重复项。</div>
-    </div>
-    <el-table :data="rows" border empty-text="暂无字典项，请先新增字典配置">
-      <el-table-column prop="dictType" label="字典类型" width="180" />
-      <el-table-column prop="itemKey" label="键值" width="180" />
-      <el-table-column prop="itemLabel" label="显示名称" />
-      <el-table-column prop="sortOrder" label="排序" width="100" />
-      <el-table-column label="操作" width="100">
-        <template #default="{ row }">
-          <el-button link type="primary" @click="openDialog(row)">编辑</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+    <el-card shadow="never" class="workspace-card">
+      <template #header>
+        <div class="section-toolbar">
+          <div class="section-title-group">
+            <div class="section-title">字典项列表</div>
+            <div class="section-subtitle">维护系统中的下拉项、筛选项和基础枚举</div>
+          </div>
+          <el-tag type="info">{{ rows.length }} 项</el-tag>
+        </div>
+      </template>
+      <el-table :data="rows" border empty-text="当前还没有字典项">
+        <el-table-column prop="dictType" label="字典类型" width="180" />
+        <el-table-column prop="itemKey" label="键值" width="180" />
+        <el-table-column prop="itemLabel" label="显示名称" />
+        <el-table-column prop="sortOrder" label="排序" width="100" />
+        <el-table-column label="操作" width="100">
+          <template #default="{ row }">
+            <el-button link type="primary" @click="openDialog(row)">编辑</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </el-card>
 
     <el-dialog v-model="dialogVisible" title="字典项" width="560px">
       <el-form :model="form" label-width="110px">

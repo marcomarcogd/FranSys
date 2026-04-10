@@ -21,6 +21,7 @@ public class DashboardService {
                 customerService.sourceChannelStats(),
                 customerService.customerLevelStats(),
                 customerService.recommendationTypeStats(),
+                customerService.dueFollowCustomers(),
                 customerService.recentCustomers()
         );
     }
