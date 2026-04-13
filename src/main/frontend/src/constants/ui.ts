@@ -167,6 +167,62 @@ export function formatPriceText(value?: string | number | null) {
   return `${value}`
 }
 
+function padDatePart(value: number) {
+  return `${value}`.padStart(2, '0')
+}
+
+export function toDateValue(value?: unknown) {
+  if (value === null || value === undefined || value === '') {
+    return null
+  }
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : value
+  }
+  const text = String(value).trim()
+  if (!text) {
+    return null
+  }
+  if (/^\d{4}-\d{2}-\d{2}$/.test(text)) {
+    const dateOnly = new Date(`${text}T00:00:00`)
+    return Number.isNaN(dateOnly.getTime()) ? null : dateOnly
+  }
+  if (/^\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}$/.test(text)) {
+    const minuteDate = new Date(text.replace(' ', 'T') + ':00')
+    return Number.isNaN(minuteDate.getTime()) ? null : minuteDate
+  }
+  if (/^\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}$/.test(text)) {
+    const secondDate = new Date(text.replace(' ', 'T'))
+    return Number.isNaN(secondDate.getTime()) ? null : secondDate
+  }
+  const normalized = text.includes(' ') && !text.includes('T') ? text.replace(' ', 'T') : text
+  const parsed = new Date(normalized)
+  return Number.isNaN(parsed.getTime()) ? null : parsed
+}
+
+export function formatDate(value?: unknown, fallback = '未填写') {
+  const parsed = toDateValue(value)
+  if (!parsed) {
+    return fallback
+  }
+  const year = parsed.getFullYear()
+  const month = padDatePart(parsed.getMonth() + 1)
+  const day = padDatePart(parsed.getDate())
+  return `${year}-${month}-${day}`
+}
+
+export function formatDateTime(value?: unknown, fallback = '未填写') {
+  const parsed = toDateValue(value)
+  if (!parsed) {
+    return fallback
+  }
+  const year = parsed.getFullYear()
+  const month = padDatePart(parsed.getMonth() + 1)
+  const day = padDatePart(parsed.getDate())
+  const hour = padDatePart(parsed.getHours())
+  const minute = padDatePart(parsed.getMinutes())
+  return `${year}-${month}-${day} ${hour}:${minute}`
+}
+
 export function isBlank(value: unknown) {
   return value === null || value === undefined || String(value).trim() === ''
 }

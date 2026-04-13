@@ -38,7 +38,9 @@
           <el-table-column prop="ownerName" label="负责人" width="110">
             <template #default="{ row }">{{ row.ownerName || '未分配' }}</template>
           </el-table-column>
-          <el-table-column prop="followUpAt" label="计划跟进" min-width="160" />
+          <el-table-column label="计划跟进" min-width="160">
+            <template #default="{ row }">{{ formatDateTime(row.followUpAt, '未安排') }}</template>
+          </el-table-column>
         </el-table>
       </el-card>
 
@@ -58,6 +60,9 @@
             <template #default="{ row }">
               <span class="table-link" @click="openCustomer(row.id)">{{ row.customerName }}</span>
             </template>
+          </el-table-column>
+          <el-table-column label="录入日期" width="120">
+            <template #default="{ row }">{{ formatDate(row.entryDate, '未记录') }}</template>
           </el-table-column>
           <el-table-column prop="sourceChannel" label="来源" min-width="100" />
           <el-table-column label="意向" width="80">
@@ -135,7 +140,7 @@
 import { computed, onMounted, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { api } from '../../api/fransys'
-import { customerLevelShortLabel, recommendationTypeLabel } from '../../constants/ui'
+import { customerLevelShortLabel, formatDate, formatDateTime, recommendationTypeLabel } from '../../constants/ui'
 
 const router = useRouter()
 const overview = reactive<any>({})
