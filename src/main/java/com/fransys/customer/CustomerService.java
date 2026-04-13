@@ -40,7 +40,7 @@ public class CustomerService {
     private final OperationLogService operationLogService;
     private final DataPermissionService dataPermissionService;
 
-    public List<CustomerDtos.CustomerListItem> listCustomers(
+    public CustomerDtos.CustomerPageResponse listCustomers(
             String keyword,
             String sourceChannel,
             String customerLevel,
@@ -49,12 +49,14 @@ public class CustomerService {
             Boolean includeUnassigned,
             Boolean unassignedOnly,
             Boolean archived,
+            Integer page,
+            Integer pageSize,
             LocalDateTime lastFollowStart,
             LocalDateTime lastFollowEnd,
             LocalDateTime nextFollowStart,
             LocalDateTime nextFollowEnd,
             SysUserDetails currentUser) {
-        return scopedCustomersForList(currentUser, ownerId, includeUnassigned, unassignedOnly).stream()
+        List<CustomerLead> filteredCustomers = scopedCustomersForList(currentUser, ownerId, includeUnassigned, unassignedOnly).stream()
                 .filter(customer -> matchesKeyword(customer, keyword))
                 .filter(customer -> isBlank(sourceChannel) || Objects.equals(customer.getSourceChannel(), sourceChannel))
                 .filter(customer -> isBlank(customerLevel) || Objects.equals(customer.getCustomerLevel(), customerLevel))
@@ -63,8 +65,18 @@ public class CustomerService {
                 .filter(customer -> inRange(customer.getLastFollowUpAt(), lastFollowStart, lastFollowEnd))
                 .filter(customer -> inRange(customer.getFollowUpAt(), nextFollowStart, nextFollowEnd))
                 .sorted(customerPriorityComparator())
+                .toList();
+        int sanitizedPageSize = sanitizePageSize(pageSize);
+        long total = filteredCustomers.size();
+        int totalPages = total == 0 ? 0 : (int) Math.ceil((double) total / sanitizedPageSize);
+        int requestedPage = sanitizePage(page);
+        int currentPage = totalPages == 0 ? 1 : Math.min(requestedPage, totalPages);
+        int fromIndex = Math.min((currentPage - 1) * sanitizedPageSize, filteredCustomers.size());
+        int toIndex = Math.min(fromIndex + sanitizedPageSize, filteredCustomers.size());
+        List<CustomerDtos.CustomerListItem> items = filteredCustomers.subList(fromIndex, toIndex).stream()
                 .map(this::toListItem)
                 .toList();
+        return new CustomerDtos.CustomerPageResponse(items, currentPage, sanitizedPageSize, total, totalPages);
     }
 
     public CustomerDtos.CustomerDetailResponse getCustomerDetail(Long customerId, SysUserDetails currentUser) {
@@ -181,6 +193,62 @@ public class CustomerService {
 
         operationLogService.log("LEAD", customerId, "RECOMMENDATION", currentUser.getDisplayName(), "新增产品或套餐推荐");
         return toRecommendationView(saved);
+    }
+
+    @Transactional
+    public void batchAssign(CustomerDtos.BatchAssignRequest request, SysUserDetails currentUser) {
+        if (!dataPermissionService.canManageOwnership(currentUser)) {
+            throw new BusinessException("当前账号无权批量分配客户");
+        }
+        List<CustomerLead> customers = normalizeCustomerSelection(request.customerIds()).stream()
+                .map(customerId -> getAccessibleCustomer(customerId, currentUser))
+                .toList();
+        SysUser owner = dataPermissionService.requireAssignableOwner(request.ownerId(), currentUser);
+        for (CustomerLead customer : customers) {
+            Long originalOwnerId = customer.getOwnerId();
+            String originalOwnerName = customer.getOwnerName();
+            customer.setOwnerId(owner.getId());
+            customer.setOwnerName(owner.getDisplayName());
+            if (!Objects.equals(originalOwnerId, owner.getId())) {
+                operationLogService.log(
+                        "LEAD",
+                        customer.getId(),
+                        "CUSTOMER_ASSIGN",
+                        currentUser.getDisplayName(),
+                        String.format("客户负责人由 %s 调整为 %s", defaultIfBlank(originalOwnerName, "未分配"), owner.getDisplayName()));
+            }
+        }
+        customerLeadRepository.saveAll(customers);
+        operationLogService.log(
+                "LEAD_BATCH",
+                0L,
+                "CUSTOMER_BATCH_ASSIGN",
+                currentUser.getDisplayName(),
+                String.format("批量分配负责人，共 %d 位客户，目标负责人：%s", customers.size(), owner.getDisplayName()));
+    }
+
+    @Transactional
+    public void batchArchive(CustomerDtos.BatchArchiveRequest request, SysUserDetails currentUser) {
+        List<CustomerLead> customers = normalizeCustomerSelection(request.customerIds()).stream()
+                .map(customerId -> getAccessibleCustomer(customerId, currentUser))
+                .toList();
+        boolean archived = Boolean.TRUE.equals(request.archived());
+        for (CustomerLead customer : customers) {
+            customer.setArchived(archived);
+            operationLogService.log(
+                    "LEAD",
+                    customer.getId(),
+                    archived ? "CUSTOMER_ARCHIVE" : "CUSTOMER_UNARCHIVE",
+                    currentUser.getDisplayName(),
+                    archived ? "批量归档客户" : "批量取消归档客户");
+        }
+        customerLeadRepository.saveAll(customers);
+        operationLogService.log(
+                "LEAD_BATCH",
+                0L,
+                archived ? "CUSTOMER_BATCH_ARCHIVE" : "CUSTOMER_BATCH_UNARCHIVE",
+                currentUser.getDisplayName(),
+                String.format("%s，共 %d 位客户", archived ? "批量归档客户" : "批量取消归档客户", customers.size()));
     }
 
     public long totalCustomers(SysUserDetails currentUser) {
@@ -423,6 +491,7 @@ public class CustomerService {
                 customer.getGender(),
                 customer.getAge(),
                 customer.getContactPhone(),
+                customer.getRegion(),
                 customer.getSourceChannel(),
                 customer.getCustomerLevel(),
                 customer.getCustomerValueLevel(),
@@ -495,6 +564,31 @@ public class CustomerService {
 
     private boolean contains(String value, String keyword) {
         return value != null && value.contains(keyword);
+    }
+
+    private int sanitizePage(Integer page) {
+        if (page == null || page < 1) {
+            return 1;
+        }
+        return page;
+    }
+
+    private int sanitizePageSize(Integer pageSize) {
+        if (pageSize == null || pageSize < 1) {
+            return 20;
+        }
+        return Math.min(pageSize, 100);
+    }
+
+    private List<Long> normalizeCustomerSelection(List<Long> customerIds) {
+        List<Long> normalized = customerIds == null ? List.of() : customerIds.stream()
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+        if (normalized.isEmpty()) {
+            throw new BusinessException("请至少选择一个客户");
+        }
+        return normalized;
     }
 
     private boolean isBlank(String value) {

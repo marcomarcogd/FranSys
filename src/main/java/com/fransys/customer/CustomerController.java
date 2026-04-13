@@ -5,7 +5,6 @@ import com.fransys.common.api.ApiResponse;
 import com.fransys.lead.CustomerLead;
 import jakarta.validation.Valid;
 import java.time.LocalDateTime;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -28,7 +27,7 @@ public class CustomerController {
 
     @GetMapping
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_SALES','ROLE_OPERATIONS')")
-    public ApiResponse<List<CustomerDtos.CustomerListItem>> list(
+    public ApiResponse<CustomerDtos.CustomerPageResponse> list(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String sourceChannel,
             @RequestParam(required = false) String customerLevel,
@@ -37,6 +36,8 @@ public class CustomerController {
             @RequestParam(required = false) Boolean includeUnassigned,
             @RequestParam(required = false) Boolean unassignedOnly,
             @RequestParam(required = false) Boolean archived,
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "20") Integer pageSize,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime lastFollowStart,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime lastFollowEnd,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime nextFollowStart,
@@ -51,6 +52,8 @@ public class CustomerController {
                 includeUnassigned,
                 unassignedOnly,
                 archived,
+                page,
+                pageSize,
                 lastFollowStart,
                 lastFollowEnd,
                 nextFollowStart,
@@ -122,5 +125,23 @@ public class CustomerController {
             @Valid @RequestBody CustomerDtos.RecommendationRequest request,
             @AuthenticationPrincipal SysUserDetails currentUser) {
         return ApiResponse.success(customerService.addRecommendation(customerId, request, currentUser));
+    }
+
+    @PostMapping("/batch/assign")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_SALES','ROLE_OPERATIONS')")
+    public ApiResponse<Void> batchAssign(
+            @Valid @RequestBody CustomerDtos.BatchAssignRequest request,
+            @AuthenticationPrincipal SysUserDetails currentUser) {
+        customerService.batchAssign(request, currentUser);
+        return ApiResponse.success();
+    }
+
+    @PostMapping("/batch/archive")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_SALES','ROLE_OPERATIONS')")
+    public ApiResponse<Void> batchArchive(
+            @Valid @RequestBody CustomerDtos.BatchArchiveRequest request,
+            @AuthenticationPrincipal SysUserDetails currentUser) {
+        customerService.batchArchive(request, currentUser);
+        return ApiResponse.success();
     }
 }

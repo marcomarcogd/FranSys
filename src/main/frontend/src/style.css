@@ -339,12 +339,58 @@ a {
   gap: 12px;
 }
 
+.column-config-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.column-config-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  font-weight: 600;
+}
+
+.column-config-group {
+  display: grid;
+  gap: 8px;
+}
+
+.batch-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(240, 138, 93, 0.18);
+  background: linear-gradient(135deg, rgba(255, 250, 244, 0.96), rgba(247, 244, 238, 0.98));
+}
+
+.batch-toolbar-text {
+  color: #34495d;
+  font-weight: 600;
+}
+
+.batch-toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
 .customer-table-card .el-card__body {
   padding-top: 0;
 }
 
 .customer-main-table .el-table__row {
   cursor: pointer;
+}
+
+.customer-main-table .el-table__body-wrapper .el-table__cell {
+  vertical-align: top;
 }
 
 .customer-row-summary {
@@ -383,6 +429,17 @@ a {
 .follow-plan-cell {
   display: grid;
   gap: 6px;
+}
+
+.table-pagination {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 18px;
+}
+
+.batch-dialog-summary {
+  color: #4d6276;
+  line-height: 1.7;
 }
 
 .customer-detail-drawer {
@@ -761,6 +818,11 @@ a {
     grid-template-columns: 1fr 1fr;
   }
 
+  .batch-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
   .customer-detail-drawer {
     width: 100vw !important;
     border-radius: 0;
@@ -793,7 +855,9 @@ a {
 
   .customer-quick-tags,
   .customer-filter-actions,
-  .customer-drawer-actions {
+  .customer-drawer-actions,
+  .batch-toolbar-actions,
+  .table-pagination {
     justify-content: flex-start;
   }
 

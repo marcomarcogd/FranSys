@@ -43,6 +43,7 @@ public class CustomerDtos {
             String gender,
             Integer age,
             String contactPhone,
+            String region,
             String sourceChannel,
             String customerLevel,
             String customerValueLevel,
@@ -53,6 +54,14 @@ public class CustomerDtos {
             LocalDateTime followUpAt,
             Boolean archived,
             LocalDate entryDate) {
+    }
+
+    public record CustomerPageResponse(
+            List<CustomerListItem> items,
+            int page,
+            int pageSize,
+            long total,
+            int totalPages) {
     }
 
     public record FollowRecordRequest(
@@ -79,6 +88,16 @@ public class CustomerDtos {
             String recommendationReason,
             String remark,
             @Valid @NotEmpty(message = "请至少添加一个推荐项") List<RecommendationItemRequest> items) {
+    }
+
+    public record BatchAssignRequest(
+            @NotEmpty(message = "请至少选择一个客户") List<Long> customerIds,
+            @NotNull(message = "请选择负责人") Long ownerId) {
+    }
+
+    public record BatchArchiveRequest(
+            @NotEmpty(message = "请至少选择一个客户") List<Long> customerIds,
+            @NotNull(message = "请确认归档状态") Boolean archived) {
     }
 
     public record RecommendationItemView(

@@ -7,10 +7,10 @@
           <div class="section-subtitle">{{ scopeHint }}</div>
         </div>
         <div class="customer-quick-tags">
-          <el-tag type="info">客户 {{ customerQuickStats.total }}</el-tag>
-          <el-tag v-if="canViewUnassigned" type="warning">待分配 {{ customerQuickStats.unassigned }}</el-tag>
-          <el-tag type="danger">待跟进 {{ customerQuickStats.due }}</el-tag>
-          <el-tag type="success">已归档 {{ customerQuickStats.archived }}</el-tag>
+          <el-tag type="info">筛选结果 {{ customerPage.total }}</el-tag>
+          <el-tag v-if="canViewUnassigned" type="warning">本页待分配 {{ customerQuickStats.unassigned }}</el-tag>
+          <el-tag type="danger">本页待跟进 {{ customerQuickStats.due }}</el-tag>
+          <el-tag type="success">本页已归档 {{ customerQuickStats.archived }}</el-tag>
           <el-button type="primary" @click="openCustomerDialog()">新建客户</el-button>
         </div>
       </div>
@@ -78,7 +78,7 @@
           <el-switch v-model="filters.unassignedOnly" />
         </el-form-item>
         <div class="customer-filter-actions form-item-full">
-          <el-button type="primary" @click="loadCustomers">查询</el-button>
+          <el-button type="primary" @click="applyFilters">查询</el-button>
           <el-button @click="resetFilters">重置</el-button>
         </div>
       </el-form>
@@ -94,11 +94,44 @@
           <div class="header-actions">
             <el-tag type="info">{{ scopeLabel }}</el-tag>
             <el-tag type="success">{{ `${customers.length} 位客户` }}</el-tag>
+            <el-popover placement="bottom-end" :width="220" trigger="click">
+              <template #reference>
+                <el-button>显示列</el-button>
+              </template>
+              <div class="column-config-panel">
+                <div class="column-config-head">
+                  <span>列表显示列</span>
+                  <el-button text @click="restoreDefaultColumns">恢复默认</el-button>
+                </div>
+                <div class="column-config-group">
+                  <el-checkbox
+                    v-for="item in customerColumnOptions"
+                    :key="item.key"
+                    :model-value="visibleColumns[item.key]"
+                    :disabled="item.locked"
+                    @change="updateColumnVisibility(item.key, $event)"
+                  >
+                    {{ item.label }}
+                  </el-checkbox>
+                </div>
+              </div>
+            </el-popover>
           </div>
         </div>
       </template>
 
+      <div v-if="hasSelection" class="batch-toolbar">
+        <div class="batch-toolbar-text">已选 {{ selectedCount }} 位客户，支持跨页保留。</div>
+        <div class="batch-toolbar-actions">
+          <el-button v-if="canManageOwnership" type="primary" @click="openBatchAssignDialog">批量分配负责人</el-button>
+          <el-button @click="confirmBatchArchive(true)">批量归档</el-button>
+          <el-button @click="confirmBatchArchive(false)">取消归档</el-button>
+          <el-button text @click="clearSelection">清空已选</el-button>
+        </div>
+      </div>
+
       <el-table
+        ref="customerTableRef"
         v-loading="listLoading"
         :data="customers"
         row-key="id"
@@ -109,39 +142,43 @@
         :current-row-key="selectedCustomerId || undefined"
         empty-text="当前没有符合条件的客户"
         @row-click="selectCustomer"
+        @selection-change="handleSelectionChange"
       >
-        <el-table-column fixed="left" label="客户" min-width="250">
+        <el-table-column type="selection" width="52" reserve-selection />
+        <el-table-column v-if="isColumnVisible('customer')" fixed="left" label="客户" min-width="220">
           <template #default="{ row }">
             <div class="customer-row-summary">
               <div class="customer-row-head">
                 <span class="customer-row-name">{{ row.customerName }}</span>
                 <span class="customer-row-code">{{ row.leadNo }}</span>
               </div>
-              <div class="customer-row-meta">
-                <span>{{ row.contactPhone || '未留电话' }}</span>
-                <span>{{ row.region || '地区待补充' }}</span>
-              </div>
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="意向等级" width="110">
+        <el-table-column v-if="isColumnVisible('contactPhone')" prop="contactPhone" label="联系电话" min-width="140">
+          <template #default="{ row }">{{ row.contactPhone || '未填写' }}</template>
+        </el-table-column>
+        <el-table-column v-if="isColumnVisible('customerLevel')" label="意向等级" width="110">
           <template #default="{ row }">
             <el-tag effect="plain">{{ customerLevelShortLabel(row.customerLevel) }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="价值等级" width="110">
+        <el-table-column v-if="isColumnVisible('customerValueLevel')" label="价值等级" width="110">
           <template #default="{ row }">
             <el-tag effect="plain" type="success">{{ customerValueLevelShortLabel(row.customerValueLevel) }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="负责人" min-width="128">
+        <el-table-column v-if="isColumnVisible('ownerName')" label="负责人" min-width="128">
           <template #default="{ row }">{{ row.ownerName || '未分配' }}</template>
         </el-table-column>
-        <el-table-column prop="sourceChannel" label="来源渠道" min-width="130" show-overflow-tooltip />
-        <el-table-column label="最近跟进" width="148">
+        <el-table-column v-if="isColumnVisible('sourceChannel')" prop="sourceChannel" label="来源渠道" min-width="130" show-overflow-tooltip />
+        <el-table-column v-if="isColumnVisible('region')" prop="region" label="地区" min-width="120" show-overflow-tooltip>
+          <template #default="{ row }">{{ row.region || '未填写' }}</template>
+        </el-table-column>
+        <el-table-column v-if="isColumnVisible('lastFollowUpAt')" label="最近跟进" width="148">
           <template #default="{ row }">{{ formatDateTime(row.lastFollowUpAt, '暂无记录') }}</template>
         </el-table-column>
-        <el-table-column label="下次跟进" min-width="176">
+        <el-table-column v-if="isColumnVisible('followUpAt')" label="下次跟进" min-width="176">
           <template #default="{ row }">
             <div class="follow-plan-cell">
               <span>{{ formatDateTime(row.followUpAt, row.archived ? '无需安排' : '未安排') }}</span>
@@ -149,12 +186,25 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="当前状态" width="128" fixed="right">
+        <el-table-column v-if="isColumnVisible('currentStatus')" label="当前状态" width="128" fixed="right">
           <template #default="{ row }">
             <el-tag :type="customerStatusType(row)" effect="light">{{ customerStatusText(row) }}</el-tag>
           </template>
         </el-table-column>
       </el-table>
+
+      <div class="table-pagination">
+        <el-pagination
+          background
+          layout="total, sizes, prev, pager, next, jumper"
+          :total="customerPage.total"
+          :current-page="customerPage.page"
+          :page-size="customerPage.pageSize"
+          :page-sizes="[10, 20, 50, 100]"
+          @current-change="handlePageChange"
+          @size-change="handlePageSizeChange"
+        />
+      </div>
     </el-card>
 
     <el-drawer
@@ -497,6 +547,23 @@
       </template>
     </el-dialog>
 
+    <el-dialog v-model="batchAssignDialogVisible" title="批量分配负责人" width="460px">
+      <el-form label-width="92px">
+        <el-form-item label="已选客户">
+          <div class="batch-dialog-summary">共 {{ selectedCount }} 位客户，将统一分配给同一负责人。</div>
+        </el-form-item>
+        <el-form-item label="负责人">
+          <el-select v-model="batchAssignForm.ownerId" filterable style="width: 100%" placeholder="请选择负责人">
+            <el-option v-for="user in assignableUsers" :key="user.id" :label="user.displayName" :value="user.id" />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="batchAssignDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="saveBatchAssign">确认分配</el-button>
+      </template>
+    </el-dialog>
+
     <el-dialog v-model="followDialogVisible" title="新增跟进" width="760px">
       <el-form :model="followForm" label-width="110px" class="grid-form">
         <el-form-item label="跟进时间">
@@ -623,9 +690,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { api } from '../../api/fransys'
 import { useSystemDicts } from '../../composables/useSystemDicts'
 import { useAuthStore } from '../../store/auth'
@@ -656,9 +723,17 @@ const router = useRouter()
 const authStore = useAuthStore()
 const { dicts, loadSystemDicts } = useSystemDicts()
 
+const customerTableRef = ref()
 const customers = ref<any[]>([])
+const customerPage = reactive({
+  page: 1,
+  pageSize: 20,
+  total: 0,
+  totalPages: 0,
+})
 const detail = reactive<any>({ customer: null, followRecords: [], recommendations: [], followFrequencyHint: '' })
 const selectedCustomerId = ref<number | null>(null)
+const selectedCustomerIds = ref<number[]>([])
 const assignableUsers = ref<any[]>([])
 const detailDrawerVisible = ref(false)
 const detailLoading = ref(false)
@@ -668,6 +743,37 @@ const detailTab = ref('overview')
 const customerDialogVisible = ref(false)
 const followDialogVisible = ref(false)
 const recommendationDialogVisible = ref(false)
+const batchAssignDialogVisible = ref(false)
+
+const batchAssignForm = reactive({
+  ownerId: undefined as number | undefined,
+})
+
+const customerColumnOptions = [
+  { key: 'customer', label: '客户', locked: true },
+  { key: 'contactPhone', label: '联系电话' },
+  { key: 'customerLevel', label: '意向等级' },
+  { key: 'customerValueLevel', label: '价值等级' },
+  { key: 'ownerName', label: '负责人' },
+  { key: 'sourceChannel', label: '来源渠道' },
+  { key: 'region', label: '地区' },
+  { key: 'lastFollowUpAt', label: '最近跟进' },
+  { key: 'followUpAt', label: '下次跟进' },
+  { key: 'currentStatus', label: '当前状态', locked: true },
+]
+
+const visibleColumns = reactive<Record<string, boolean>>({
+  customer: true,
+  contactPhone: true,
+  customerLevel: true,
+  customerValueLevel: true,
+  ownerName: true,
+  sourceChannel: true,
+  region: true,
+  lastFollowUpAt: true,
+  followUpAt: true,
+  currentStatus: true,
+})
 
 const canManageOwnership = computed(() => authStore.user?.roleCode === 'ROLE_ADMIN' || authStore.user?.accountLevel === 'LEADER')
 const canViewUnassigned = computed(() => canManageOwnership.value)
@@ -681,7 +787,9 @@ const scopeHint = computed(() => {
   if (authStore.user?.accountLevel === 'LEADER') return '主管可查看自己及下属客户，也可处理待分配客户。'
   return '当前只显示你本人负责的客户。'
 })
-const tableSubtitle = computed(() => `${scopeLabel.value}按待跟进优先排序，点击行即可打开客户详情工作台。`)
+const tableSubtitle = computed(() => `${scopeLabel.value}共 ${customerPage.total} 位客户，按待跟进优先排序。`)
+const selectedCount = computed(() => selectedCustomerIds.value.length)
+const hasSelection = computed(() => selectedCount.value > 0)
 
 const filters = reactive<any>({
   keyword: '',
@@ -726,6 +834,7 @@ const customerQuickStats = computed(() => {
     { total: 0, archived: 0, unassigned: 0, due: 0 },
   )
 })
+const columnStorageKey = computed(() => `fransys.customer-table.${authStore.user?.userId || 'default'}`)
 
 const contactMethods = [
   { label: '电话', value: 'PHONE' },
@@ -876,7 +985,10 @@ async function loadAssignableUsers() {
   assignableUsers.value = await api.assignableUsers()
 }
 
-async function loadCustomers() {
+async function loadCustomers(resetPage = false) {
+  if (resetPage) {
+    customerPage.page = 1
+  }
   listLoading.value = true
   try {
     const params: any = {
@@ -885,6 +997,8 @@ async function loadCustomers() {
       customerLevel: filters.customerLevel,
       customerValueLevel: filters.customerValueLevel,
       archived: filters.archived,
+      page: customerPage.page,
+      pageSize: customerPage.pageSize,
     }
     if (canManageOwnership.value) {
       params.ownerId = filters.ownerId
@@ -899,15 +1013,18 @@ async function loadCustomers() {
       params.nextFollowStart = filters.nextFollowRange[0]
       params.nextFollowEnd = filters.nextFollowRange[1]
     }
-    customers.value = await api.customers(params)
-    if (selectedCustomerId.value && !customers.value.find((item) => item.id === selectedCustomerId.value)) {
+    const response = await api.customers(params)
+    customers.value = response.items || []
+    customerPage.page = response.page || customerPage.page
+    customerPage.pageSize = response.pageSize || customerPage.pageSize
+    customerPage.total = response.total || 0
+    customerPage.totalPages = response.totalPages || 0
+    if (selectedCustomerId.value && !route.query.customerId && !customers.value.find((item) => item.id === selectedCustomerId.value)) {
       selectedCustomerId.value = null
-      detailDrawerVisible.value = false
       Object.assign(detail, { customer: null, followRecords: [], recommendations: [], followFrequencyHint: '' })
-      if (route.query.customerId) {
-        await router.replace({ path: '/admin/customers' })
-      }
     }
+    await nextTick()
+    syncTableSelection()
   } finally {
     listLoading.value = false
   }
@@ -931,11 +1048,6 @@ async function syncDrawerWithRoute() {
   if (!customerId) {
     detailDrawerVisible.value = false
     detailTab.value = 'overview'
-    return
-  }
-  if (customers.value.length && !customers.value.find((item) => item.id === customerId)) {
-    detailDrawerVisible.value = false
-    await router.replace({ path: '/admin/customers' })
     return
   }
   try {
@@ -971,6 +1083,7 @@ async function selectCustomer(row: any) {
 async function handleDrawerClose() {
   detailDrawerVisible.value = false
   detailTab.value = 'overview'
+  selectedCustomerId.value = null
   if (route.query.customerId) {
     await router.replace({ path: '/admin/customers' })
   }
@@ -1002,6 +1115,59 @@ function openRecommendationDialog() {
   detailTab.value = 'recommendation'
   resetRecommendationForm()
   recommendationDialogVisible.value = true
+}
+
+function openBatchAssignDialog() {
+  if (!hasSelection.value) {
+    ElMessage.warning('请先选择客户')
+    return
+  }
+  resetBatchAssignForm()
+  batchAssignDialogVisible.value = true
+}
+
+async function saveBatchAssign() {
+  if (!batchAssignForm.ownerId) {
+    ElMessage.warning('请选择负责人')
+    return
+  }
+  await api.batchAssignCustomers({
+    customerIds: selectedCustomerIds.value,
+    ownerId: batchAssignForm.ownerId,
+  })
+  ElMessage.success(`已完成 ${selectedCount.value} 位客户的负责人分配`)
+  batchAssignDialogVisible.value = false
+  clearSelection()
+  await loadCustomers()
+  if (selectedCustomerId.value) {
+    await loadDetail(selectedCustomerId.value)
+  }
+}
+
+async function confirmBatchArchive(archived: boolean) {
+  if (!hasSelection.value) {
+    ElMessage.warning('请先选择客户')
+    return
+  }
+  await ElMessageBox.confirm(
+    archived ? `确认归档已选的 ${selectedCount.value} 位客户吗？` : `确认取消归档已选的 ${selectedCount.value} 位客户吗？`,
+    archived ? '批量归档' : '取消归档',
+    {
+      confirmButtonText: archived ? '确认归档' : '确认取消归档',
+      cancelButtonText: '取消',
+      type: archived ? 'warning' : 'info',
+    },
+  )
+  await api.batchArchiveCustomers({
+    customerIds: selectedCustomerIds.value,
+    archived,
+  })
+  ElMessage.success(archived ? '已批量归档所选客户' : '已批量取消归档所选客户')
+  clearSelection()
+  await loadCustomers()
+  if (selectedCustomerId.value) {
+    await loadDetail(selectedCustomerId.value)
+  }
 }
 
 async function saveCustomer() {
@@ -1074,6 +1240,68 @@ function addRecommendationItem() {
   })
 }
 
+function resetBatchAssignForm() {
+  batchAssignForm.ownerId = undefined
+}
+
+function isColumnVisible(key: string) {
+  return visibleColumns[key] !== false
+}
+
+function restoreDefaultColumns() {
+  customerColumnOptions.forEach((item) => {
+    visibleColumns[item.key] = true
+  })
+}
+
+function updateColumnVisibility(key: string, checked: unknown) {
+  visibleColumns[key] = !!checked
+}
+
+function loadColumnPreference() {
+  restoreDefaultColumns()
+  const raw = localStorage.getItem(columnStorageKey.value)
+  if (!raw) {
+    return
+  }
+  try {
+    const parsed = JSON.parse(raw)
+    customerColumnOptions.forEach((item) => {
+      if (!item.locked && typeof parsed[item.key] === 'boolean') {
+        visibleColumns[item.key] = parsed[item.key]
+      }
+    })
+  } catch {
+    localStorage.removeItem(columnStorageKey.value)
+  }
+}
+
+function syncTableSelection() {
+  const table = customerTableRef.value
+  if (!table) {
+    return
+  }
+  table.clearSelection()
+  const selectedSet = new Set(selectedCustomerIds.value)
+  customers.value.forEach((row) => {
+    if (selectedSet.has(row.id)) {
+      table.toggleRowSelection(row, true)
+    }
+  })
+}
+
+function handleSelectionChange(selection: any[]) {
+  const pageIds = new Set(customers.value.map((item) => item.id))
+  const keptIds = selectedCustomerIds.value.filter((id) => !pageIds.has(id))
+  const currentIds = selection.map((item) => item.id)
+  selectedCustomerIds.value = [...keptIds, ...currentIds]
+}
+
+function clearSelection() {
+  selectedCustomerIds.value = []
+  syncTableSelection()
+}
+
 function removeRecommendationItem(index: number | string) {
   recommendationForm.items.splice(Number(index), 1)
 }
@@ -1106,6 +1334,23 @@ async function saveRecommendation() {
   detailDrawerVisible.value = true
 }
 
+async function handlePageChange(page: number) {
+  customerPage.page = page
+  await loadCustomers()
+}
+
+async function handlePageSizeChange(pageSize: number) {
+  customerPage.pageSize = pageSize
+  customerPage.page = 1
+  await loadCustomers()
+}
+
+async function applyFilters() {
+  clearSelection()
+  await loadCustomers(true)
+  await syncDrawerWithRoute()
+}
+
 async function resetFilters() {
   Object.assign(filters, {
     keyword: '',
@@ -1119,7 +1364,8 @@ async function resetFilters() {
     lastFollowRange: [],
     nextFollowRange: [],
   })
-  await loadCustomers()
+  clearSelection()
+  await loadCustomers(true)
   await syncDrawerWithRoute()
 }
 
@@ -1136,6 +1382,7 @@ onMounted(async () => {
   packages.value = await api.productPackages()
   await loadAssignableUsers()
   filters.includeUnassigned = canViewUnassigned.value
+  loadColumnPreference()
   await loadCustomers()
   await syncDrawerWithRoute()
 })
@@ -1154,6 +1401,26 @@ watch(
       filters.ownerId = undefined
       filters.includeUnassigned = true
     }
+  },
+)
+
+watch(
+  visibleColumns,
+  (value) => {
+    const payload = Object.fromEntries(
+      customerColumnOptions
+        .filter((item) => !item.locked)
+        .map((item) => [item.key, value[item.key] !== false]),
+    )
+    localStorage.setItem(columnStorageKey.value, JSON.stringify(payload))
+  },
+  { deep: true },
+)
+
+watch(
+  () => authStore.user?.userId,
+  () => {
+    loadColumnPreference()
   },
 )
 </script>
