@@ -11,11 +11,11 @@ public class ApiResponse<T> {
     private T data;
 
     public static <T> ApiResponse<T> success(T data) {
-        return new ApiResponse<>(0, "success", data);
+        return new ApiResponse<>(0, "成功", data);
     }
 
     public static ApiResponse<Void> success() {
-        return new ApiResponse<>(0, "success", null);
+        return new ApiResponse<>(0, "成功", null);
     }
 
     public static ApiResponse<Void> fail(String message) {

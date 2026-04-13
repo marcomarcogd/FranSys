@@ -37,6 +37,20 @@ export const customerLevelOptions = [
   },
 ]
 
+export const knownDictTypes = [
+  { value: 'source_channel', label: '来源渠道' },
+  { value: 'customer_level', label: '意向等级' },
+  { value: 'customer_value_level', label: '价值等级' },
+  { value: 'product_category', label: '产品分类' },
+  { value: 'product_applicable_people', label: '适用人群' },
+  { value: 'package_applicable_scene', label: '套餐适用场景' },
+  { value: 'enterprise_service_mode', label: '企业服务模式' },
+  { value: 'enterprise_response_speed', label: '企业响应速度' },
+  { value: 'enterprise_certification_status', label: '企业认证状态' },
+  { value: 'enterprise_certification_level', label: '企业认证等级' },
+  { value: 'enterprise_expertise', label: '企业擅长领域' },
+]
+
 export const customerValueLevelOptions = [
   {
     value: 'A',
@@ -130,6 +144,29 @@ export function roleCodeLabel(value?: string) {
   return value || '未设置'
 }
 
+export function dictTypeLabel(value?: string) {
+  const option = knownDictTypes.find((item) => item.value === value)
+  return option?.label || value || '未命名'
+}
+
+export function uniqueDictTypeOptions(existingValues: string[] = []) {
+  const merged = new Map<string, string>()
+  knownDictTypes.forEach((item) => merged.set(item.value, item.label))
+  existingValues.filter(Boolean).forEach((value) => {
+    if (!merged.has(value)) {
+      merged.set(value, value)
+    }
+  })
+  return Array.from(merged.entries()).map(([value, label]) => ({ value, label }))
+}
+
+export function formatPriceText(value?: string | number | null) {
+  if (value === null || value === undefined || value === '') {
+    return '未报价'
+  }
+  return `${value}`
+}
+
 export function isBlank(value: unknown) {
   return value === null || value === undefined || String(value).trim() === ''
 }
@@ -165,6 +202,12 @@ export function toFriendlyErrorMessage(message?: string) {
   }
   if (message.startsWith('系统异常:')) {
     return '系统开小差了，请稍后再试'
+  }
+  if (message.includes('PRODUCT') || message.includes('PACKAGE')) {
+    return '推荐类型无效，请重新选择'
+  }
+  if (message.includes('STAFF') || message.includes('LEADER')) {
+    return '账号等级无效，请重新选择'
   }
   return message
 }

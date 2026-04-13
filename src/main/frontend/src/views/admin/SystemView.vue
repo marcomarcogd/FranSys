@@ -60,18 +60,18 @@
         <el-form-item label="用户名"><el-input v-model="form.username" placeholder="请输入登录用户名" clearable /></el-form-item>
         <el-form-item label="姓名"><el-input v-model="form.displayName" placeholder="请输入用户姓名" clearable /></el-form-item>
         <el-form-item label="角色">
-          <el-select v-model="form.roleCode" style="width: 100%" placeholder="请选择">
+          <el-select v-model="form.roleCode" filterable style="width: 100%" placeholder="请选择角色">
             <el-option v-for="role in meta.roles || []" :key="role.id" :label="role.roleName" :value="role.roleCode" />
           </el-select>
         </el-form-item>
         <el-form-item label="账号等级">
-          <el-select v-model="form.accountLevel" style="width: 100%" placeholder="请选择">
+          <el-select v-model="form.accountLevel" filterable style="width: 100%" placeholder="请选择账号等级">
             <el-option label="成员" value="STAFF" />
             <el-option label="主管" value="LEADER" />
           </el-select>
         </el-form-item>
         <el-form-item label="直属上级">
-          <el-select v-model="form.managerUserId" clearable style="width: 100%" placeholder="请选择">
+          <el-select v-model="form.managerUserId" clearable filterable style="width: 100%" placeholder="请选择直属上级" popper-class="wide-select-popper">
             <el-option
               v-for="user in managerOptions"
               :key="user.id"

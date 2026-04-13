@@ -7,4 +7,5 @@ public interface DictItemRepository extends JpaRepository<DictItem, Long> {
     List<DictItem> findByEnabledTrueOrderByDictTypeAscSortOrderAsc();
     List<DictItem> findByDictTypeOrderBySortOrderAsc(String dictType);
     boolean existsByDictTypeAndItemKey(String dictType, String itemKey);
+    boolean existsByDictTypeAndItemKeyAndEnabledTrue(String dictType, String itemKey);
 }

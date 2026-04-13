@@ -8,13 +8,15 @@
         <div class="section-toolbar">
           <div class="section-title-group">
             <div class="section-title">字典项列表</div>
-            <div class="section-subtitle">维护系统中的下拉项、筛选项和基础枚举</div>
+            <div class="section-subtitle">维护系统中的下拉选项和基础配置</div>
           </div>
           <el-tag type="info">{{ rows.length }} 项</el-tag>
         </div>
       </template>
       <el-table :data="rows" border empty-text="当前还没有字典项">
-        <el-table-column prop="dictType" label="字典类型" width="180" />
+        <el-table-column label="字典类型" min-width="180" show-overflow-tooltip>
+          <template #default="{ row }">{{ dictTypeLabel(row.dictType) }}</template>
+        </el-table-column>
         <el-table-column prop="itemKey" label="键值" width="180" />
         <el-table-column prop="itemLabel" label="显示名称" />
         <el-table-column prop="sortOrder" label="排序" width="100" />
@@ -28,9 +30,13 @@
 
     <el-dialog v-model="dialogVisible" title="字典项" width="560px">
       <el-form :model="form" label-width="110px">
-        <el-form-item label="字典类型"><el-input v-model="form.dictType" placeholder="请输入字典类型，例如 customer_level" clearable /></el-form-item>
-        <el-form-item label="键值"><el-input v-model="form.itemKey" placeholder="请输入存储键值，例如 A" clearable /></el-form-item>
-        <el-form-item label="显示名称"><el-input v-model="form.itemLabel" placeholder="请输入展示名称，例如 A级客户" clearable /></el-form-item>
+        <el-form-item label="字典类型">
+          <el-select v-model="form.dictType" filterable style="width: 100%" placeholder="请选择字典类型">
+            <el-option v-for="item in dictTypeOptions" :key="item.value" :label="item.label" :value="item.value" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="键值"><el-input v-model="form.itemKey" placeholder="请输入内部键值" clearable /></el-form-item>
+        <el-form-item label="显示名称"><el-input v-model="form.itemLabel" placeholder="请输入界面展示名称" clearable /></el-form-item>
         <el-form-item label="排序"><el-input-number v-model="form.sortOrder" :min="1" /></el-form-item>
         <el-form-item label="启用"><el-switch v-model="form.enabled" /></el-form-item>
       </el-form>
@@ -43,14 +49,16 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { api } from '../../api/fransys'
-import { isBlank } from '../../constants/ui'
+import { dictTypeLabel, isBlank, uniqueDictTypeOptions } from '../../constants/ui'
+import { clearSystemDictsCache } from '../../composables/useSystemDicts'
 
 const rows = ref<any[]>([])
 const dialogVisible = ref(false)
 const form = reactive<any>({})
+const dictTypeOptions = computed(() => uniqueDictTypeOptions(rows.value.map((item) => item.dictType)))
 
 function resetForm() {
   Object.assign(form, { id: undefined, dictType: '', itemKey: '', itemLabel: '', sortOrder: 1, enabled: true })
@@ -82,6 +90,7 @@ async function save() {
   await api.saveDict(form)
   ElMessage.success('字典项已保存')
   dialogVisible.value = false
+  clearSystemDictsCache()
   await load()
 }
 

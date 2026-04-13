@@ -173,6 +173,12 @@ a {
   line-height: 1.5;
 }
 
+.field-label {
+  color: #5c6d7e;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
 .stat-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -405,9 +411,67 @@ a {
 
 .recommendation-editor-row,
 .package-editor-row {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(17, 33, 45, 0.08);
+  background: rgba(255, 255, 255, 0.88);
+}
+
+.editor-row-primary {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  gap: 12px;
+  align-items: end;
+}
+
+.editor-row-secondary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(120px, 160px)) minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.recommendation-editor-secondary {
+  grid-template-columns: 130px 180px minmax(0, 1fr) auto;
+}
+
+.field-stack {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.field-span-2 {
+  min-width: 0;
+}
+
+.editor-type-field {
+  min-width: 0;
+}
+
+.editor-remove {
   display: flex;
-  gap: 10px;
   align-items: center;
+  justify-content: flex-end;
+}
+
+.rich-option {
+  display: grid;
+  gap: 4px;
+  padding: 2px 0;
+}
+
+.rich-option-title {
+  color: #1f2d3d;
+  font-weight: 600;
+}
+
+.rich-option-meta {
+  color: #6a7b8d;
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 .upload-block {
@@ -438,6 +502,18 @@ a {
   margin: 0;
 }
 
+.wide-select-popper {
+  min-width: 420px !important;
+}
+
+.wide-select-popper .el-select-dropdown__item {
+  height: auto;
+  line-height: 1.5;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  white-space: normal;
+ }
+
 @media (max-width: 1024px) {
   .admin-shell,
   .auth-panel,
@@ -450,8 +526,7 @@ a {
 
   .recommendation-editor-row,
   .package-editor-row {
-    flex-direction: column;
-    align-items: stretch;
+    padding: 14px;
   }
 
   .admin-sidebar {
@@ -460,5 +535,15 @@ a {
 
   .three-column {
     grid-template-columns: 1fr;
+  }
+
+  .editor-row-primary,
+  .editor-row-secondary,
+  .recommendation-editor-secondary {
+    grid-template-columns: 1fr;
+  }
+
+  .editor-remove {
+    justify-content: flex-start;
   }
 }

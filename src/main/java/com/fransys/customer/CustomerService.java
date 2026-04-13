@@ -336,9 +336,9 @@ public class CustomerService {
         }
         if ("PACKAGE".equals(item.getItemType())) {
             ProductPackage productPackage = productPackageRepository.findById(item.getItemId())
-                    .orElseThrow(() -> new BusinessException("套餐包不存在"));
+                    .orElseThrow(() -> new BusinessException("套餐方案不存在"));
             item.setItemName(productPackage.getName());
-            item.setEnterpriseName("套餐包");
+            item.setEnterpriseName("套餐方案");
             if (item.getQuotedPrice() == null) {
                 item.setQuotedPrice(productPackage.getPrice());
             }
@@ -484,7 +484,7 @@ public class CustomerService {
     private String normalizeItemType(String itemType) {
         String normalized = defaultIfBlank(itemType, "").trim().toUpperCase(Locale.ROOT);
         if (!List.of("PRODUCT", "PACKAGE").contains(normalized)) {
-            throw new BusinessException("推荐类型必须为 PRODUCT 或 PACKAGE");
+            throw new BusinessException("推荐类型无效，请重新选择产品或套餐方案");
         }
         return normalized;
     }

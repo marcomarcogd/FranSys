@@ -112,6 +112,14 @@ public class SeedDataService implements CommandLineRunner {
                 new String[]{"B", "尊享"},
                 new String[]{"C", "基础"},
                 new String[]{"D", "会员"}));
+        seed("product_category", List.of("康复护理", "长者照护", "母婴护理", "慢病管理", "居家支持", "术后恢复"));
+        seed("product_applicable_people", List.of("长者", "术后人群", "慢病人群", "母婴家庭", "康复期人群", "高需求家庭"));
+        seed("package_applicable_scene", List.of("居家照护", "术后恢复", "长者陪护", "母婴陪护", "慢病随访", "节日关怀"));
+        seed("enterprise_service_mode", List.of("上门服务", "到店服务", "远程咨询", "驻点服务"));
+        seed("enterprise_response_speed", List.of("2小时内", "当日响应", "24小时内", "预约制"));
+        seed("enterprise_certification_status", List.of("已认证", "审核中", "未认证"));
+        seed("enterprise_certification_level", List.of("基础认证", "标准认证", "高级认证", "旗舰认证"));
+        seed("enterprise_expertise", List.of("康复护理", "长者照护", "母婴护理", "慢病管理", "营养支持", "心理支持"));
     }
 
     private void seed(String dictType, List<String> labels) {
@@ -149,9 +157,9 @@ public class SeedDataService implements CommandLineRunner {
         if (enterpriseRepository.count() > 0) {
             return;
         }
-        createEnterprise("沪康护理服务中心", "李老师", "13800000001", "上海浦东、徐汇", "康护,上门护理", "上门", "2小时内", "已认证", "A", "康复陪护", "术后康复案例丰富", "300-800/次", "工作日+周末");
-        createEnterprise("安心到家健康服务", "王经理", "13800000002", "上海闵行、静安", "陪护,家庭支持", "上门,到店", "当天响应", "已认证", "S", "长者照护", "高龄家庭服务经验", "500-1500/周期", "全天");
-        createEnterprise("颐养调理馆", "周顾问", "13800000003", "上海黄浦", "调理,到店服务", "到店", "4小时内", "认证中", "B", "慢病调理", "社区案例沉淀", "200-500/次", "周一至周六");
+        createEnterprise("沪康护理服务中心", "李老师", "13800000001", "上海浦东、徐汇", "康护,上门护理", "上门服务", "2小时内", "已认证", "高级认证", "康复护理", "术后康复案例丰富", "300-800/次", "工作日+周末");
+        createEnterprise("安心到家健康服务", "王经理", "13800000002", "上海闵行、静安", "陪护,家庭支持", "到店服务", "当日响应", "已认证", "旗舰认证", "长者照护", "高龄家庭服务经验", "500-1500/周期", "全天");
+        createEnterprise("颐养调理馆", "周顾问", "13800000003", "上海黄浦", "调理,到店服务", "远程咨询", "24小时内", "审核中", "标准认证", "慢病管理", "社区案例沉淀", "200-500/次", "周一至周六");
     }
 
     private void createEnterprise(String name, String contactPerson, String phone, String area, String items,
@@ -182,14 +190,14 @@ public class SeedDataService implements CommandLineRunner {
             return;
         }
         List<Enterprise> enterprises = enterpriseRepository.findAll();
-        Product productA = createProduct(enterprises.get(0), "术后康复陪护", "8小时/次", "康复护理", "术后恢复", new BigDecimal("899.00"));
-        createProduct(enterprises.get(1), "高龄长者陪伴", "12小时/次", "陪护服务", "长者照护", new BigDecimal("1280.00"));
-        Product productC = createProduct(enterprises.get(2), "慢病调理方案", "到店 1 次", "基础调理", "慢病管理", new BigDecimal("399.00"));
+        Product productA = createProduct(enterprises.get(0), "术后康复陪护", "8小时/次", "术后恢复", "术后人群", new BigDecimal("899.00"));
+        createProduct(enterprises.get(1), "高龄长者陪伴", "12小时/次", "长者照护", "长者", new BigDecimal("1280.00"));
+        Product productC = createProduct(enterprises.get(2), "慢病调理方案", "到店 1 次", "慢病管理", "慢病人群", new BigDecimal("399.00"));
 
         if (productPackageRepository.count() == 0) {
             ProductPackage productPackage = new ProductPackage();
             productPackage.setName("术后恢复关怀包");
-            productPackage.setApplicableScene("术后两周内家庭恢复");
+            productPackage.setApplicableScene("术后恢复");
             productPackage.setPrice(new BigDecimal("2280.00"));
             productPackage.setDescription("组合康复陪护与到店调理，适合术后短周期恢复客户");
             productPackage.setActive(true);
@@ -210,7 +218,7 @@ public class SeedDataService implements CommandLineRunner {
         product.setPrice(price);
         product.setServiceProcess("初步评估 -> 服务安排 -> 服务执行 -> 回访记录");
         product.setRegulatoryInfo("平台内部备案，按规范留档");
-        product.setDescription("FranSys 示例产品数据");
+        product.setDescription("系统示例产品数据");
         product.setActive(true);
         return productRepository.save(product);
     }

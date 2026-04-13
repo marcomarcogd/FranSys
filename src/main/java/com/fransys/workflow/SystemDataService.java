@@ -6,6 +6,7 @@ import com.fransys.common.enums.AccountLevel;
 import com.fransys.common.exception.BusinessException;
 import com.fransys.dict.DictItem;
 import com.fransys.dict.DictItemRepository;
+import com.fransys.dict.DictValueService;
 import com.fransys.enterprise.Enterprise;
 import com.fransys.enterprise.EnterpriseRepository;
 import com.fransys.system.SysRoleRepository;
@@ -30,6 +31,7 @@ public class SystemDataService {
     private final SysRoleRepository sysRoleRepository;
     private final PasswordEncoder passwordEncoder;
     private final DataPermissionService dataPermissionService;
+    private final DictValueService dictValueService;
 
     public Map<String, List<DictItem>> groupedDicts() {
         return dictItemRepository.findByEnabledTrueOrderByDictTypeAscSortOrderAsc()
@@ -55,6 +57,11 @@ public class SystemDataService {
 
     @Transactional
     public Enterprise saveEnterprise(Enterprise enterprise) {
+        enterprise.setServiceModes(dictValueService.normalizeEnabledValue("enterprise_service_mode", enterprise.getServiceModes(), "服务模式"));
+        enterprise.setResponseSpeed(dictValueService.normalizeEnabledValue("enterprise_response_speed", enterprise.getResponseSpeed(), "响应速度"));
+        enterprise.setCertificationStatus(dictValueService.normalizeEnabledValue("enterprise_certification_status", enterprise.getCertificationStatus(), "认证状态"));
+        enterprise.setCertificationLevel(dictValueService.normalizeEnabledValue("enterprise_certification_level", enterprise.getCertificationLevel(), "认证等级"));
+        enterprise.setExpertise(dictValueService.normalizeEnabledValue("enterprise_expertise", enterprise.getExpertise(), "擅长领域"));
         return enterpriseRepository.save(enterprise);
     }
 
@@ -140,7 +147,7 @@ public class SystemDataService {
         try {
             return AccountLevel.valueOf(accountLevel);
         } catch (Exception ex) {
-            throw new BusinessException("账号等级必须为 STAFF 或 LEADER");
+            throw new BusinessException("账号等级无效，请重新选择");
         }
     }
 }

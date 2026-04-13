@@ -2,7 +2,7 @@
   <div class="auth-page">
     <div class="auth-panel">
       <div class="hero-card">
-        <div class="eyebrow">FranSys Workspace</div>
+        <div class="eyebrow">内部协同平台</div>
         <h1>FranSys</h1>
         <p>面向内部团队的客户与供给协同平台，帮助你更高效地管理客户、产品与推荐方案。</p>
       </div>

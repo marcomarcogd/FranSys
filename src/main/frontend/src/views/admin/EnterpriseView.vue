@@ -30,18 +30,38 @@
       </el-table>
     </el-card>
 
-    <el-dialog v-model="dialogVisible" :title="form.id ? '编辑企业' : '新增企业'" width="760px">
+    <el-dialog v-model="dialogVisible" :title="form.id ? '编辑企业' : '新增企业'" width="920px">
       <el-form :model="form" label-width="110px" class="grid-form">
         <el-form-item label="企业名称"><el-input v-model="form.name" placeholder="请输入企业名称" clearable /></el-form-item>
         <el-form-item label="联系人"><el-input v-model="form.contactPerson" placeholder="请输入联系人姓名" clearable /></el-form-item>
         <el-form-item label="联系方式"><el-input v-model="form.phone" placeholder="请输入联系方式" clearable /></el-form-item>
         <el-form-item label="服务区域"><el-input v-model="form.serviceArea" placeholder="请输入服务区域" clearable /></el-form-item>
         <el-form-item label="服务项目"><el-input v-model="form.serviceItems" placeholder="请输入主要服务项目" clearable /></el-form-item>
-        <el-form-item label="服务模式"><el-input v-model="form.serviceModes" placeholder="请输入服务模式，例如 上门 / 到店" clearable /></el-form-item>
-        <el-form-item label="响应速度"><el-input v-model="form.responseSpeed" placeholder="请输入响应时效，例如 2小时内" clearable /></el-form-item>
-        <el-form-item label="认证状态"><el-input v-model="form.certificationStatus" placeholder="请输入认证状态" clearable /></el-form-item>
-        <el-form-item label="认证等级"><el-input v-model="form.certificationLevel" placeholder="请输入认证等级" clearable /></el-form-item>
-        <el-form-item label="擅长领域"><el-input v-model="form.expertise" placeholder="请输入擅长领域" clearable /></el-form-item>
+        <el-form-item label="服务模式">
+          <el-select v-model="form.serviceModes" filterable clearable style="width: 100%" placeholder="请选择服务模式">
+            <el-option v-for="item in serviceModeOptions" :key="item.id" :label="item.itemLabel" :value="item.itemKey" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="响应速度">
+          <el-select v-model="form.responseSpeed" filterable clearable style="width: 100%" placeholder="请选择响应速度">
+            <el-option v-for="item in responseSpeedOptions" :key="item.id" :label="item.itemLabel" :value="item.itemKey" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="认证状态">
+          <el-select v-model="form.certificationStatus" filterable clearable style="width: 100%" placeholder="请选择认证状态">
+            <el-option v-for="item in certificationStatusOptions" :key="item.id" :label="item.itemLabel" :value="item.itemKey" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="认证等级">
+          <el-select v-model="form.certificationLevel" filterable clearable style="width: 100%" placeholder="请选择认证等级">
+            <el-option v-for="item in certificationLevelOptions" :key="item.id" :label="item.itemLabel" :value="item.itemKey" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="擅长领域">
+          <el-select v-model="form.expertise" filterable clearable style="width: 100%" placeholder="请选择擅长领域">
+            <el-option v-for="item in expertiseOptions" :key="item.id" :label="item.itemLabel" :value="item.itemKey" />
+          </el-select>
+        </el-form-item>
         <el-form-item label="案例经验"><el-input v-model="form.caseExperience" placeholder="请输入代表案例或服务经验" clearable /></el-form-item>
         <el-form-item label="价格区间"><el-input v-model="form.priceRange" placeholder="请输入价格区间" clearable /></el-form-item>
         <el-form-item label="服务时间"><el-input v-model="form.serviceTime" placeholder="请输入可服务时间" clearable /></el-form-item>
@@ -63,13 +83,20 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { api } from '../../api/fransys'
 import { isBlank, isValidPhone } from '../../constants/ui'
+import { useSystemDicts } from '../../composables/useSystemDicts'
 import { useAuthStore } from '../../store/auth'
 
 const authStore = useAuthStore()
+const { dicts, loadSystemDicts } = useSystemDicts()
 const canEditSupply = computed(() => authStore.user?.roleCode !== 'ROLE_SALES')
 const rows = ref<any[]>([])
 const dialogVisible = ref(false)
 const form = reactive<any>({})
+const serviceModeOptions = computed(() => dicts.enterprise_service_mode || [])
+const responseSpeedOptions = computed(() => dicts.enterprise_response_speed || [])
+const certificationStatusOptions = computed(() => dicts.enterprise_certification_status || [])
+const certificationLevelOptions = computed(() => dicts.enterprise_certification_level || [])
+const expertiseOptions = computed(() => dicts.enterprise_expertise || [])
 
 function resetForm() {
   Object.assign(form, {
@@ -121,6 +148,7 @@ async function save() {
 
 onMounted(async () => {
   resetForm()
+  await loadSystemDicts()
   await load()
 })
 </script>

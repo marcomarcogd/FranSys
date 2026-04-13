@@ -427,22 +427,54 @@
       </div>
       <div class="recommendation-editor">
         <div v-for="(item, index) in recommendationForm.items" :key="index" class="recommendation-editor-row">
-          <el-select v-model="item.itemType" style="width: 140px" placeholder="请选择类型">
-            <el-option label="产品" value="PRODUCT" />
-            <el-option label="套餐方案" value="PACKAGE" />
-          </el-select>
-          <el-select v-model="item.itemId" filterable style="flex: 1" placeholder="请选择内容">
-            <el-option
-              v-for="option in recommendationOptions(item.itemType)"
-              :key="`${item.itemType}-${option.id}`"
-              :label="option.name"
-              :value="option.id"
-            />
-          </el-select>
-          <el-input-number v-model="item.priorityNo" :min="1" :max="99" />
-          <el-input v-model="item.quotedPrice" placeholder="报价" />
-          <el-input v-model="item.note" placeholder="备注" />
-          <el-button text type="danger" @click="removeRecommendationItem(index)">删除</el-button>
+          <div class="editor-row-primary">
+            <div class="field-stack editor-type-field">
+              <div class="field-label">推荐类型</div>
+              <el-select v-model="item.itemType" style="width: 100%" placeholder="请选择类型">
+                <el-option label="产品" value="PRODUCT" />
+                <el-option label="套餐方案" value="PACKAGE" />
+              </el-select>
+            </div>
+            <div class="field-stack">
+              <div class="field-label">{{ item.itemType === 'PACKAGE' ? '套餐方案' : '产品' }}</div>
+              <el-select
+                v-model="item.itemId"
+                filterable
+                style="width: 100%"
+                placeholder="请选择内容"
+                popper-class="wide-select-popper"
+              >
+                <el-option
+                  v-for="option in recommendationOptions(item.itemType)"
+                  :key="`${item.itemType}-${option.id}`"
+                  :label="recommendationOptionLabel(item.itemType, option)"
+                  :value="option.id"
+                >
+                  <div class="rich-option">
+                    <div class="rich-option-title">{{ option.name }}</div>
+                    <div class="rich-option-meta">{{ recommendationOptionMeta(item.itemType, option) }}</div>
+                  </div>
+                </el-option>
+              </el-select>
+            </div>
+          </div>
+          <div class="editor-row-secondary recommendation-editor-secondary">
+            <div class="field-stack">
+              <div class="field-label">优先级</div>
+              <el-input-number v-model="item.priorityNo" :min="1" :max="99" style="width: 100%" />
+            </div>
+            <div class="field-stack">
+              <div class="field-label">报价</div>
+              <el-input v-model="item.quotedPrice" placeholder="如 2980" />
+            </div>
+            <div class="field-stack field-span-2">
+              <div class="field-label">备注</div>
+              <el-input v-model="item.note" placeholder="补充报价口径、亮点或注意事项" />
+            </div>
+            <div class="editor-remove">
+              <el-button text type="danger" @click="removeRecommendationItem(index)">删除</el-button>
+            </div>
+          </div>
         </div>
       </div>
       <template #footer>
@@ -458,6 +490,7 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { api } from '../../api/fransys'
+import { useSystemDicts } from '../../composables/useSystemDicts'
 import { useAuthStore } from '../../store/auth'
 import CustomerIntentLevelGuide from '../../components/CustomerIntentLevelGuide.vue'
 import {
@@ -470,6 +503,7 @@ import {
   customerValueLevelOptionLabel,
   customerValueLevelOptions,
   customerValueLevelShortLabel,
+  formatPriceText,
   isBlank,
   isValidEmail,
   isValidPhone,
@@ -479,8 +513,8 @@ import {
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
+const { dicts, loadSystemDicts } = useSystemDicts()
 
-const dicts = reactive<any>({})
 const customers = ref<any[]>([])
 const detail = reactive<any>({ customer: null, followRecords: [], recommendations: [], followFrequencyHint: '' })
 const selectedCustomerId = ref<number | null>(null)
@@ -596,6 +630,20 @@ function resetRecommendationForm() {
 
 function recommendationOptions(itemType: string) {
   return itemType === 'PACKAGE' ? packages.value : products.value
+}
+
+function recommendationOptionLabel(itemType: string, option: any) {
+  if (itemType === 'PACKAGE') {
+    return `${option.name} · ${option.applicableScene || '未设置场景'} · ${formatPriceText(option.price)}`
+  }
+  return `${option.name} · ${option.enterpriseName || '未设置企业'} · ${option.specification || '未设置规格'}`
+}
+
+function recommendationOptionMeta(itemType: string, option: any) {
+  if (itemType === 'PACKAGE') {
+    return `${option.applicableScene || '未设置场景'} · 包含 ${option.itemCount || 0} 个产品 · ${formatPriceText(option.price)}`
+  }
+  return `${option.enterpriseName || '未设置企业'} · ${option.category || '未设置分类'} · ${option.specification || '未设置规格'} · ${formatPriceText(option.price)}`
 }
 
 async function loadAssignableUsers() {
@@ -819,7 +867,7 @@ onMounted(async () => {
   resetCustomerForm()
   resetFollowForm()
   resetRecommendationForm()
-  Object.assign(dicts, await api.dictsGrouped())
+  await loadSystemDicts()
   products.value = await api.products()
   packages.value = await api.productPackages()
   await loadAssignableUsers()

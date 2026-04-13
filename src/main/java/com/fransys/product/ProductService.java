@@ -1,6 +1,7 @@
 package com.fransys.product;
 
 import com.fransys.common.exception.BusinessException;
+import com.fransys.dict.DictValueService;
 import com.fransys.enterprise.Enterprise;
 import com.fransys.enterprise.EnterpriseRepository;
 import java.util.List;
@@ -18,6 +19,7 @@ public class ProductService {
     private final ProductPackageRepository productPackageRepository;
     private final ProductPackageItemRepository productPackageItemRepository;
     private final EnterpriseRepository enterpriseRepository;
+    private final DictValueService dictValueService;
 
     public List<ProductDtos.ProductView> listProducts(Long enterpriseId, String category, Boolean active) {
         return productRepository.findAll(Sort.by(Sort.Direction.DESC, "updatedAt")).stream()
@@ -39,8 +41,8 @@ public class ProductService {
         product.setEnterpriseName(enterprise.getName());
         product.setName(request.name());
         product.setSpecification(request.specification());
-        product.setCategory(request.category());
-        product.setApplicablePeople(request.applicablePeople());
+        product.setCategory(dictValueService.normalizeEnabledValue("product_category", request.category(), "产品分类"));
+        product.setApplicablePeople(dictValueService.normalizeEnabledValue("product_applicable_people", request.applicablePeople(), "适用人群"));
         product.setPrice(request.price());
         product.setImageUrl(request.imageUrl());
         product.setServiceProcess(request.serviceProcess());
@@ -61,9 +63,9 @@ public class ProductService {
     public ProductPackage savePackage(ProductDtos.ProductPackageUpsertRequest request) {
         ProductPackage productPackage = request.id() == null
                 ? new ProductPackage()
-                : productPackageRepository.findById(request.id()).orElseThrow(() -> new BusinessException("套餐包不存在"));
+                : productPackageRepository.findById(request.id()).orElseThrow(() -> new BusinessException("套餐方案不存在"));
         productPackage.setName(request.name());
-        productPackage.setApplicableScene(request.applicableScene());
+        productPackage.setApplicableScene(dictValueService.normalizeEnabledValue("package_applicable_scene", request.applicableScene(), "适用场景"));
         productPackage.setPrice(request.price());
         productPackage.setDescription(request.description());
         productPackage.setActive(request.active() == null || request.active());

@@ -40,10 +40,14 @@
       </el-table>
     </el-card>
 
-    <el-dialog v-model="dialogVisible" :title="form.id ? '编辑套餐方案' : '新增套餐方案'" width="920px">
+    <el-dialog v-model="dialogVisible" :title="form.id ? '编辑套餐方案' : '新增套餐方案'" width="980px">
       <el-form :model="form" label-width="110px" class="grid-form">
         <el-form-item label="方案名称"><el-input v-model="form.name" placeholder="请输入方案名称" clearable /></el-form-item>
-        <el-form-item label="适用场景"><el-input v-model="form.applicableScene" placeholder="例如 术后恢复、长者照护" clearable /></el-form-item>
+        <el-form-item label="适用场景">
+          <el-select v-model="form.applicableScene" filterable clearable style="width: 100%" placeholder="请选择适用场景">
+            <el-option v-for="item in sceneOptions" :key="item.id" :label="item.itemLabel" :value="item.itemKey" />
+          </el-select>
+        </el-form-item>
         <el-form-item label="参考价格"><el-input v-model="form.price" placeholder="请输入价格，例如 6999" clearable /></el-form-item>
         <el-form-item label="启用"><el-switch v-model="form.active" /></el-form-item>
       </el-form>
@@ -60,13 +64,44 @@
       </div>
       <div class="package-editor">
         <div v-for="(item, index) in form.items" :key="index" class="package-editor-row">
-          <el-select v-model="item.productId" filterable style="flex: 1" placeholder="请选择产品">
-            <el-option v-for="product in products" :key="product.id" :label="`${product.name} / ${product.enterpriseName}`" :value="product.id" />
-          </el-select>
-          <el-input-number v-model="item.quantity" :min="1" />
-          <el-input v-model="item.itemNote" placeholder="备注，例如 含一次上门服务" />
-          <el-input-number v-model="item.sortOrder" :min="1" />
-          <el-button text type="danger" @click="removeItem(index)">删除</el-button>
+          <div class="editor-row-primary">
+            <div class="field-stack">
+              <div class="field-label">产品</div>
+              <el-select v-model="item.productId" filterable style="width: 100%" placeholder="请选择产品" popper-class="wide-select-popper">
+                <el-option
+                  v-for="product in products"
+                  :key="product.id"
+                  :label="productOptionLabel(product)"
+                  :value="product.id"
+                >
+                  <div class="rich-option">
+                    <div class="rich-option-title">{{ product.name }}</div>
+                    <div class="rich-option-meta">
+                      {{ product.enterpriseName || '未设置企业' }} · {{ product.specification || '未设置规格' }} ·
+                      {{ product.category || '未设置分类' }} · {{ formatPriceText(product.price) }}
+                    </div>
+                  </div>
+                </el-option>
+              </el-select>
+            </div>
+          </div>
+          <div class="editor-row-secondary">
+            <div class="field-stack">
+              <div class="field-label">数量</div>
+              <el-input-number v-model="item.quantity" :min="1" style="width: 100%" />
+            </div>
+            <div class="field-stack">
+              <div class="field-label">排序</div>
+              <el-input-number v-model="item.sortOrder" :min="1" style="width: 100%" />
+            </div>
+            <div class="field-stack field-span-2">
+              <div class="field-label">备注</div>
+              <el-input v-model="item.itemNote" placeholder="例如：含一次上门服务" />
+            </div>
+            <div class="editor-remove">
+              <el-button text type="danger" @click="removeItem(index)">删除</el-button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -82,15 +117,18 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { api } from '../../api/fransys'
-import { isBlank } from '../../constants/ui'
+import { formatPriceText, isBlank } from '../../constants/ui'
+import { useSystemDicts } from '../../composables/useSystemDicts'
 import { useAuthStore } from '../../store/auth'
 
 const authStore = useAuthStore()
+const { dicts, loadSystemDicts } = useSystemDicts()
 const canEditSupply = computed(() => authStore.user?.roleCode !== 'ROLE_SALES')
 const rows = ref<any[]>([])
 const products = ref<any[]>([])
 const dialogVisible = ref(false)
 const form = reactive<any>({})
+const sceneOptions = computed(() => dicts.package_applicable_scene || [])
 
 function resetForm() {
   Object.assign(form, {
@@ -142,6 +180,10 @@ function removeItem(index: number | string) {
   form.items.splice(Number(index), 1)
 }
 
+function productOptionLabel(product: any) {
+  return `${product.name} · ${product.enterpriseName || '未设置企业'} · ${product.specification || '未设置规格'}`
+}
+
 async function save() {
   if (isBlank(form.name)) {
     ElMessage.warning('请填写方案名称')
@@ -171,6 +213,7 @@ async function save() {
 
 onMounted(async () => {
   resetForm()
+  await loadSystemDicts()
   products.value = await api.products()
   await load()
 })
