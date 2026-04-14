@@ -11,7 +11,7 @@ FranSys 是一个基于 Spring Boot + Vue 3 + Element Plus 的一体化单体系
 
 ## 默认账号
 
-- 管理员：`admin / Admin@123`
+- 管理员：`admin / 123456`
 - 销售主管：`sales_leader / Leader@123`
 - 销售：`sales / Sales@123`
 - 运营：`ops / Ops@123`
